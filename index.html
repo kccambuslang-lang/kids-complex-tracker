@@ -272,7 +272,7 @@ function LoginScreen({users,staff,onLogin}){
   function handleKeyDown(i,e){if(e.key==='Backspace'&&!pin[i]&&i>0)refs[i-1].current&&refs[i-1].current.focus()}
 
   const activeStaff=staff.filter(s=>s.employmentStatus==='active'||s.employmentStatus==='onboarding');
-  const selProfile=selected?staff.find(s=>s.id===selected.staffId):null;
+  const selProfile=selected?staff.find(s=>s.id===selected.id):null;
 
   return(
     <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px',background:'var(--bg)'}}>
