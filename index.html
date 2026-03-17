@@ -1516,7 +1516,20 @@ async function saveStaffToFirebase(staff) {
   const [templates,setTemplates]=useState(()=>saved?.templates||SEED_TEMPLATES);
   const [navTab,setNavTab]=useState('dashboard');
   const [toast,setToast]=useState(null);
-
+React.useEffect(() => {
+  async function syncStaffFromFirebase() {
+    const firebaseStaff = await loadStaffFromFirebase();
+    if (firebaseStaff && firebaseStaff.length > 0) {
+      setStaff(firebaseStaff);
+    }
+  }
+  syncStaffFromFirebase();
+}, []);
+  React.useEffect(() => {
+  if (staff && staff.length) {
+    saveStaffToFirebase(staff);
+  }
+}, [staff]);
   // Persist every time any data slice changes
   useEffect(()=>{
     saveStore({users,staff,rota,attendance,holidays,absences,templates});
