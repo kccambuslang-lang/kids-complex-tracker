@@ -1448,7 +1448,6 @@ function CompliancePanel({staff,setStaff,showToast}){
     </div>
   );
 }
-
 // ── PERSISTENCE HELPERS ───────────────────────────────────
 const LS_KEY='kc_tracker_v1';
 function loadStore(){
@@ -1463,7 +1462,48 @@ function saveStore(data){
 }
 
 // ── APP ROOT ──────────────────────────────────────────────
-function App(){
+
+ async function loadStaffFromFirebase() {
+  try {
+    if (!window.db || !window.fb) return null;
+
+    const { collection, getDocs } = window.fb;
+    const snap = await getDocs(collection(window.db, "staff"));
+    const staff = [];
+
+    snap.forEach((docSnap) => {
+      const data = docSnap.data();
+      staff.push({
+        id: docSnap.id,
+        ...data
+      });
+    });
+
+    return staff;
+  } catch (e) {
+    console.warn("Firebase load failed", e);
+    return null;
+  }
+}
+
+async function saveStaffToFirebase(staff) {
+  try {
+    if (!window.db || !window.fb) return;
+
+    const { doc, setDoc } = window.fb;
+
+    for (const member of staff) {
+      const id = member.id || crypto.randomUUID();
+      await setDoc(doc(window.db, "staff", id), {
+        ...member,
+        id
+      });
+    }
+  } catch (e) {
+    console.warn("Firebase save failed", e);
+  }
+}
+ function App(){
   // Initialise each slice from localStorage if it exists, else fall back to seed data
   const saved=loadStore();
   const [currentUser,setCurrentUser]=useState(null);
