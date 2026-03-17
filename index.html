@@ -1508,7 +1508,7 @@ async function saveStaffToFirebase(staff) {
   const saved=loadStore();
   const [currentUser,setCurrentUser]=useState(null);
   const [users,setUsers]=useState(()=>saved?.users||SEED_USERS);
-  const [staff,setStaff]=useState(()=>saved?.staff||SEED_STAFF);
+  const [staff,setStaff]=useState([]);
   const [rota,setRota]=useState(()=>saved?.rota||SEED_ROTA);
   const [attendance,setAttendance]=useState(()=>saved?.attendance||SEED_ATTENDANCE);
   const [holidays,setHolidays]=useState(()=>saved?.holidays||SEED_HOLIDAYS);
