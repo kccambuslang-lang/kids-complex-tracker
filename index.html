@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kids Complex Staff Time Tracker</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --pink:#FF6B9D;--pink-light:#FFE8F2;--pink-mid:#FFB3D1;
+    --purple:#7C5CBF;--purple-light:#F0EBFF;--purple-mid:#C4B0E8;
+    --teal:#2BBFAA;--teal-light:#E6FAF7;--teal-mid:#90DDD4;
+    --orange:#FF8C42;--orange-light:#FFF0E6;--orange-mid:#FFBF96;
+    --yellow:#FFD166;--yellow-light:#FFF8E6;
+    --blue:#4A90D9;--blue-light:#EBF4FF;
+    --green:#5CB85C;--green-light:#EDFAED;
+    --red:#E74C3C;--red-light:#FDECEA;
+    --bg:#F8F6FF;--card:#FFFFFF;--text:#2D2D3F;--muted:#8A8AA8;
+    --border:#E8E4F0;--shadow:0 2px 12px rgba(124,92,191,0.08);
+    --radius:16px;--radius-sm:10px;--radius-pill:50px;
+  }
+  html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
+  #root{height:100%}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);padding:1.25rem}
+  .card-sm{background:var(--card);border-radius:var(--radius-sm);box-shadow:var(--shadow);border:1px solid var(--border);padding:1rem}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--radius-pill);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .18s}
+  .pill-primary{background:var(--purple);color:#fff}.pill-primary:hover{background:#6847ad}
+  .pill-pink{background:var(--pink);color:#fff}.pill-pink:hover{background:#e05589}
+  .pill-teal{background:var(--teal);color:#fff}.pill-teal:hover{background:#22a494}
+  .pill-orange{background:var(--orange);color:#fff}.pill-orange:hover{background:#e07835}
+  .pill-ghost{background:transparent;color:var(--purple);border:1.5px solid var(--purple-mid)}.pill-ghost:hover{background:var(--purple-light)}
+  .pill-danger{background:var(--red);color:#fff}.pill-danger:hover{background:#c0392b}
+  .pill-success{background:var(--green);color:#fff}.pill-success:hover{background:#4aa24a}
+  .pill-sm{padding:4px 10px;font-size:12px}
+  .input{width:100%;padding:9px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;color:var(--text);background:#fff;outline:none;transition:border .15s}
+  .input:focus{border-color:var(--purple)}
+  .select{width:100%;padding:9px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;color:var(--text);background:#fff;outline:none;cursor:pointer}
+  .select:focus{border-color:var(--purple)}
+  .label{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:5px;display:block}
+  .field{margin-bottom:1rem}
+  .heading{font-size:22px;font-weight:800;color:var(--text)}
+  .subheading{font-size:16px;font-weight:700;color:var(--text)}
+  .muted{color:var(--muted);font-size:13px}
+  .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:var(--radius-pill);font-size:12px;font-weight:700}
+  .badge-pending{background:var(--yellow-light);color:#B8820A}
+  .badge-approved{background:var(--green-light);color:#2D7A2D}
+  .badge-rejected{background:var(--red-light);color:var(--red)}
+  .badge-active{background:var(--teal-light);color:#1A8A7A}
+  .badge-late{background:var(--orange-light);color:#C05A1A}
+  .badge-absent{background:var(--red-light);color:var(--red)}
+  .badge-ontime{background:var(--green-light);color:#2D7A2D}
+  .badge-early{background:var(--blue-light);color:#2A60A0}
+  .badge-info{background:var(--blue-light);color:#2A60A0}
+  .row{display:flex;align-items:center;gap:10px}
+  .row-between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .mt-1{margin-top:8px}.mt-2{margin-top:16px}.mt-3{margin-top:24px}
+  .mb-1{margin-bottom:8px}.mb-2{margin-bottom:16px}.mb-3{margin-bottom:24px}
+  .gap-1{gap:8px}.gap-2{gap:16px}
+  .text-center{text-align:center}
+  .flex-col{display:flex;flex-direction:column}
+  .nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1.5px solid var(--border);display:flex;z-index:100;padding:6px 0 8px}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:pointer;border:none;background:none;font-size:11px;color:var(--muted);transition:color .15s}
+  .nav-item.active{color:var(--purple)}
+  .nav-icon{font-size:20px;line-height:1}
+  .page{padding:16px;padding-bottom:90px;max-width:520px;margin:0 auto}
+  .topbar{background:var(--card);border-bottom:1.5px solid var(--border);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+  .avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0}
+  .divider{height:1px;background:var(--border);margin:12px 0}
+  .stat-card{background:var(--card);border-radius:var(--radius-sm);padding:1rem;border:1px solid var(--border);text-align:center}
+  .stat-num{font-size:28px;font-weight:800;margin-top:4px}
+  .rota-cell{border:1px solid var(--border);min-height:50px;cursor:pointer;transition:background .12s;border-radius:6px;margin:2px;display:flex;align-items:center;justify-content:center}
+  .rota-cell:hover{background:var(--purple-light)}
+  .shift-chip{padding:4px 6px;border-radius:6px;font-size:10px;font-weight:700;text-align:center;width:100%;line-height:1.3}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+  .modal{background:var(--card);border-radius:var(--radius);padding:1.5rem;width:100%;max-width:440px;max-height:88vh;overflow-y:auto}
+  .modal-title{font-size:18px;font-weight:800}
+  .close-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);padding:2px 6px;border-radius:6px;line-height:1}
+  .close-btn:hover{background:var(--border)}
+  .alert{padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;margin-bottom:12px}
+  .alert-success{background:var(--green-light);color:#2D7A2D;border:1px solid #B5DFB5}
+  .alert-error{background:var(--red-light);color:var(--red);border:1px solid #F5B8B4}
+  .alert-info{background:var(--blue-light);color:#2A60A0;border:1px solid #B5D4F4}
+  .list-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+  .list-item:last-child{border-bottom:none}
+  .clock-btn{width:100%;padding:18px;border-radius:var(--radius);font-size:18px;font-weight:800;border:none;cursor:pointer;transition:all .2s;margin-bottom:12px}
+  .dept-badge{padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700}
+  .tab-bar{display:flex;gap:4px;background:var(--purple-light);border-radius:var(--radius-pill);padding:4px;margin-bottom:16px}
+  .tab{flex:1;text-align:center;padding:7px 8px;border-radius:var(--radius-pill);border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--muted);transition:all .15s;white-space:nowrap}
+  .tab.active{background:var(--card);color:var(--purple);box-shadow:0 1px 4px rgba(124,92,191,0.15)}
+  .week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .week-nav button{background:none;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px;cursor:pointer;font-weight:700;color:var(--purple);font-size:14px}
+  .week-nav button:hover{background:var(--purple-light)}
+  .pin-input{display:flex;gap:10px;justify-content:center;margin:1rem 0}
+  .pin-dot{width:48px;height:52px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:24px;text-align:center;font-weight:700;outline:none;background:#fff;color:var(--text)}
+  .pin-dot:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-light)}
+  .dept-color-kids{background:#FFE8F2;color:#C03070}
+  .dept-color-sports{background:#EBF4FF;color:#2060A0}
+  .dept-color-arts{background:#EDFAED;color:#2D7A2D}
+  .dept-color-admin{background:#F0EBFF;color:#6040B0}
+  .dept-color-kitchen{background:#FFF0E6;color:#C05A1A}
+  .dept-color-management{background:#FFF8E6;color:#B8820A}
+  .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:999;padding:10px 22px;border-radius:50px;font-weight:700;font-size:14px;box-shadow:0 4px 20px rgba(0,0,0,0.15);white-space:nowrap;pointer-events:none}
+  .login-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;text-align:left;transition:all .15s;display:flex;align-items:center;gap:12px;padding:12px 16px;width:100%}
+  .login-card:hover{border-color:var(--purple);box-shadow:0 2px 12px rgba(124,92,191,0.12)}
+  textarea.input{resize:vertical}
+  @media(max-width:400px){.grid-2{grid-template-columns:1fr}.stat-num{font-size:22px}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+const {useState,useEffect,useRef,useCallback}=React;
+
+// ── CONSTANTS ─────────────────────────────────────────────
+const DEPARTMENTS=['Kids Zone','Sports','Arts & Crafts','Admin','Kitchen','Management'];
+const DEPT_COLORS={'Kids Zone':'dept-color-kids','Sports':'dept-color-sports','Arts & Crafts':'dept-color-arts','Admin':'dept-color-admin','Kitchen':'dept-color-kitchen','Management':'dept-color-management'};
+const SHIFT_PRESETS=[{label:'Early',start:'07:00',end:'13:00'},{label:'Mid',start:'10:00',end:'16:00'},{label:'Late',start:'13:00',end:'19:00'},{label:'Full',start:'08:00',end:'16:00'},{label:'Split',start:'09:00',end:'17:00'},{label:'Custom',start:'',end:''}];
+// Week runs Sat(0) Sun(1) Mon(2) Tue(3) Wed(4) Thu(5) Fri(6)
+const DAYS=['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
+
+// ── UTILS ─────────────────────────────────────────────────
+const genId=(p='id')=>`${p}_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+const timeToMins=t=>{if(!t)return 0;const[h,m]=t.split(':').map(Number);return h*60+m};
+const minsToTime=m=>{const h=String(Math.floor(m/60)).padStart(2,'0');const mm=String(m%60).padStart(2,'0');return`${h}:${mm}`};
+const getInitials=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const formatDate=d=>{if(!d)return'';try{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}catch{return d}};
+const TODAY=new Date().toISOString().slice(0,10);
+
+// Week starts on Saturday.
+// JS getDay(): 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat
+// Our day index: 0=Sat,1=Sun,2=Mon,3=Tue,4=Wed,5=Thu,6=Fri
+// Mapping JS getDay() → our index: Sat(6)→0, Sun(0)→1, Mon(1)→2 ... Fri(5)→6
+function jsdayToIdx(jsDay){ return (jsDay+1)%7; }
+function getTodayIdx(){ return jsdayToIdx(new Date().getDay()); }
+
+function getSaturdayOfWeek(date){
+  const d=new Date(date+'T12:00:00');
+  const jsDay=d.getDay(); // 0=Sun … 6=Sat
+  // days since last Saturday: Sat→0, Sun→1, Mon→2, Tue→3, Wed→4, Thu→5, Fri→6
+  const daysSinceSat=(jsDay+1)%7;
+  d.setDate(d.getDate()-daysSinceSat);
+  d.setHours(0,0,0,0);
+  return d.toISOString().slice(0,10);
+}
+const THIS_SATURDAY=getSaturdayOfWeek(TODAY);
+
+function addWeeks(satStart,n){
+  const d=new Date(satStart+'T12:00:00');
+  d.setDate(d.getDate()+n*7);
+  return getSaturdayOfWeek(d.toISOString().slice(0,10));
+}
+function weekDates(satStart){
+  return Array.from({length:7},(_,i)=>{
+    const d=new Date(satStart+'T12:00:00');
+    d.setDate(d.getDate()+i);
+    return d.toISOString().slice(0,10);
+  });
+}
+// Returns the Friday (last day) of a Sat-start week
+function weekEndDate(satStart){
+  const d=new Date(satStart+'T12:00:00');
+  d.setDate(d.getDate()+6);
+  return d.toISOString().slice(0,10);
+}
+function calculatePaidHours(clockIn,clockOut,trackedBreakMins){
+  if(!clockIn||!clockOut)return{grossHours:0,paidHours:0,breakMinutes:0};
+  const gross=(timeToMins(clockOut)-timeToMins(clockIn))/60;
+  if(gross<=0)return{grossHours:0,paidHours:0,breakMinutes:0};
+  // Use whichever is greater: actual tracked break or the auto 30-min rule (only if >4h)
+  const autoBreak=gross>4?30:0;
+  const actualBreak=trackedBreakMins||0;
+  const brk=Math.max(autoBreak,actualBreak);
+  return{grossHours:parseFloat(gross.toFixed(2)),paidHours:parseFloat(Math.max(0,gross-brk/60).toFixed(2)),breakMinutes:brk};
+}
+function getAttendanceStatus(scheduledStart,clockIn){
+  if(!clockIn)return'absent';
+  const diff=timeToMins(clockIn)-timeToMins(scheduledStart);
+  if(diff>5)return'late';
+  if(diff<-5)return'early';
+  return'on-time';
+}
+
+// ── SEED DATA ─────────────────────────────────────────────
+const SEED_STAFF=[
+  {id:'S001',fullName:'Sarah Mitchell',role:'manager',department:'Management',payRate:18.50,availability:['Mon','Tue','Wed','Thu','Fri'],employmentStatus:'active',startDate:'2021-03-15',endDate:'',notes:'Site Manager',complianceFields:{dbs:true,rightToWork:true},createdAt:'2021-03-15'},
+  {id:'S002',fullName:'Jamie Lee',role:'supervisor',department:'Kids Zone',payRate:13.50,availability:['Mon','Tue','Wed','Thu','Fri','Sat'],employmentStatus:'active',startDate:'2022-06-01',endDate:'',notes:'Lead supervisor KZ',complianceFields:{dbs:true,rightToWork:true},createdAt:'2022-06-01'},
+  {id:'S003',fullName:'Priya Sharma',role:'staff',department:'Kids Zone',payRate:11.50,availability:['Mon','Wed','Fri','Sat','Sun'],employmentStatus:'active',startDate:'2023-01-10',endDate:'',notes:'',complianceFields:{dbs:true,rightToWork:true},createdAt:'2023-01-10'},
+  {id:'S004',fullName:'Tom Brady',role:'staff',department:'Sports',payRate:12.00,availability:['Tue','Thu','Sat','Sun'],employmentStatus:'active',startDate:'2023-04-05',endDate:'',notes:'Sports coach',complianceFields:{dbs:true,rightToWork:true},createdAt:'2023-04-05'},
+  {id:'S005',fullName:'Emma Walsh',role:'staff',department:'Arts & Crafts',payRate:11.50,availability:['Mon','Tue','Wed','Thu','Fri'],employmentStatus:'active',startDate:'2023-08-20',endDate:'',notes:'',complianceFields:{dbs:false,rightToWork:true},createdAt:'2023-08-20'},
+  {id:'S006',fullName:'Dani Okafor',role:'staff',department:'Kitchen',payRate:11.44,availability:['Wed','Thu','Fri','Sat'],employmentStatus:'onboarding',startDate:'2024-11-01',endDate:'',notes:'DBS pending',complianceFields:{dbs:false,rightToWork:true},createdAt:'2024-11-01'},
+];
+const SEED_USERS=[
+  {id:'U001',staffId:'S001',username:'sarah',pin:'1234',role:'manager'},
+  {id:'U002',staffId:'S002',username:'jamie',pin:'2222',role:'supervisor'},
+  {id:'U003',staffId:'S003',username:'priya',pin:'3333',role:'staff'},
+  {id:'U004',staffId:'S004',username:'tom',pin:'4444',role:'staff'},
+  {id:'U005',staffId:'S005',username:'emma',pin:'5555',role:'staff'},
+  {id:'U006',staffId:'S006',username:'dani',pin:'6666',role:'staff'},
+];
+const SEED_ROTA=[{id:'R001',weekStartDate:THIS_SATURDAY,shifts:[
+  {id:'SH001',staffId:'S001',day:0,startTime:'09:00',endTime:'17:00',department:'Management',shiftType:'Full'},
+  {id:'SH002',staffId:'S001',day:1,startTime:'09:00',endTime:'17:00',department:'Management',shiftType:'Full'},
+  {id:'SH003',staffId:'S001',day:2,startTime:'09:00',endTime:'17:00',department:'Management',shiftType:'Full'},
+  {id:'SH004',staffId:'S002',day:0,startTime:'08:00',endTime:'16:00',department:'Kids Zone',shiftType:'Full'},
+  {id:'SH005',staffId:'S002',day:1,startTime:'08:00',endTime:'16:00',department:'Kids Zone',shiftType:'Full'},
+  {id:'SH006',staffId:'S002',day:2,startTime:'10:00',endTime:'18:00',department:'Kids Zone',shiftType:'Mid'},
+  {id:'SH007',staffId:'S003',day:0,startTime:'09:00',endTime:'15:00',department:'Kids Zone',shiftType:'Mid'},
+  {id:'SH008',staffId:'S003',day:2,startTime:'09:00',endTime:'15:00',department:'Kids Zone',shiftType:'Mid'},
+  {id:'SH009',staffId:'S004',day:1,startTime:'10:00',endTime:'16:00',department:'Sports',shiftType:'Mid'},
+  {id:'SH010',staffId:'S004',day:3,startTime:'10:00',endTime:'16:00',department:'Sports',shiftType:'Mid'},
+  {id:'SH011',staffId:'S005',day:0,startTime:'09:00',endTime:'17:00',department:'Arts & Crafts',shiftType:'Full'},
+  {id:'SH012',staffId:'S005',day:1,startTime:'09:00',endTime:'17:00',department:'Arts & Crafts',shiftType:'Full'},
+  {id:'SH013',staffId:'S005',day:2,startTime:'09:00',endTime:'13:00',department:'Arts & Crafts',shiftType:'Early'},
+  {id:'SH014',staffId:'S006',day:2,startTime:'11:00',endTime:'15:00',department:'Kitchen',shiftType:'Custom'},
+  {id:'SH015',staffId:'S006',day:3,startTime:'11:00',endTime:'15:00',department:'Kitchen',shiftType:'Custom'},
+]}];
+const SEED_ATTENDANCE=[
+  {id:'A001',staffId:'S001',date:THIS_SATURDAY,rotaShiftId:'SH001',scheduledStart:'09:00',scheduledEnd:'17:00',clockIn:'08:55',clockOut:'17:05',breakMinutes:30,grossHours:8.17,paidHours:7.67,status:'early',earlyLateMinutes:-5,notes:''},
+  {id:'A002',staffId:'S002',date:THIS_SATURDAY,rotaShiftId:'SH004',scheduledStart:'08:00',scheduledEnd:'16:00',clockIn:'08:12',clockOut:'16:00',breakMinutes:30,grossHours:7.8,paidHours:7.3,status:'late',earlyLateMinutes:12,notes:''},
+  {id:'A003',staffId:'S003',date:THIS_SATURDAY,rotaShiftId:'SH007',scheduledStart:'09:00',scheduledEnd:'15:00',clockIn:'09:00',clockOut:'15:00',breakMinutes:30,grossHours:6,paidHours:5.5,status:'on-time',earlyLateMinutes:0,notes:''},
+];
+const SEED_HOLIDAYS=[
+  {id:'H001',staffId:'S003',startDate:'2025-08-11',endDate:'2025-08-15',reason:'Family holiday',status:'pending',reviewedBy:null,reviewedAt:null,createdAt:TODAY},
+  {id:'H002',staffId:'S004',startDate:'2025-07-28',endDate:'2025-07-30',reason:'Wedding',status:'approved',reviewedBy:'S001',reviewedAt:TODAY,createdAt:TODAY},
+  {id:'H003',staffId:'S005',startDate:'2025-09-01',endDate:'2025-09-05',reason:'',status:'pending',reviewedBy:null,reviewedAt:null,createdAt:TODAY},
+];
+const SEED_ABSENCE=[
+  {id:'AB001',staffId:'S004',staffName:'Tom Brady',date:TODAY,type:'late',comment:'Traffic on M6, arrived 20 mins late',approvedBy:null,approvedAt:null,createdAt:TODAY},
+  {id:'AB002',staffId:'S005',staffName:'Emma Walsh',date:TODAY,type:'sick',comment:'Feeling unwell - stomach bug',approvedBy:'U002',approvedAt:TODAY,createdAt:TODAY},
+];
+const SEED_TEMPLATES=[{id:'T001',name:'Standard Week',createdAt:TODAY,createdBy:'S001',shifts:[
+  {staffId:'S001',day:0,startTime:'09:00',endTime:'17:00',department:'Management',shiftType:'Full'},
+  {staffId:'S001',day:1,startTime:'09:00',endTime:'17:00',department:'Management',shiftType:'Full'},
+  {staffId:'S002',day:0,startTime:'08:00',endTime:'16:00',department:'Kids Zone',shiftType:'Full'},
+  {staffId:'S002',day:1,startTime:'08:00',endTime:'16:00',department:'Kids Zone',shiftType:'Full'},
+  {staffId:'S003',day:0,startTime:'09:00',endTime:'15:00',department:'Kids Zone',shiftType:'Mid'},
+  {staffId:'S004',day:1,startTime:'10:00',endTime:'16:00',department:'Sports',shiftType:'Mid'},
+  {staffId:'S005',day:0,startTime:'09:00',endTime:'17:00',department:'Arts & Crafts',shiftType:'Full'},
+]}];
+
+// ── TOAST ─────────────────────────────────────────────────
+function Toast({msg,type}){
+  const bg=type==='error'?'var(--red)':type==='info'?'var(--blue)':'var(--teal)';
+  return <div className="toast" style={{background:bg,color:'#fff'}}>{msg}</div>;
+}
+
+// ── LOGIN ─────────────────────────────────────────────────
+function LoginScreen({users,staff,onLogin}){
+  const [step,setStep]=useState('select');
+  const [selected,setSelected]=useState(null);
+  const [pin,setPin]=useState(['','','','']);
+  const [err,setErr]=useState('');
+  const r0=useRef(),r1=useRef(),r2=useRef(),r3=useRef();
+  const refs=[r0,r1,r2,r3];
+
+  function handleSelect(u){setSelected(u);setStep('pin');setPin(['','','','']);setErr('');setTimeout(()=>r0.current&&r0.current.focus(),120)}
+  function handleChange(i,v){
+    if(!/^\d?$/.test(v))return;
+    const p=[...pin];p[i]=v;setPin(p);
+    if(v&&i<3)refs[i+1].current&&refs[i+1].current.focus();
+    if(p.every(d=>d!=='')){
+      const entered=p.join('');
+      if(entered===selected.pin){onLogin(selected)}
+      else{setErr('Incorrect PIN – try again');setPin(['','','','']);setTimeout(()=>r0.current&&r0.current.focus(),100)}
+    }
+  }
+  function handleKeyDown(i,e){if(e.key==='Backspace'&&!pin[i]&&i>0)refs[i-1].current&&refs[i-1].current.focus()}
+
+  const activeStaff=staff.filter(s=>s.employmentStatus==='active'||s.employmentStatus==='onboarding');
+  const selProfile=selected?staff.find(s=>s.id===selected.staffId):null;
+
+  return(
+    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px',background:'var(--bg)'}}>
+      <div style={{marginBottom:'2rem',textAlign:'center'}}>
+        <div style={{fontSize:52,marginBottom:8}}>🎉</div>
+        <h1 style={{fontSize:28,fontWeight:900,color:'var(--purple)'}}>Kids Complex</h1>
+        <p className="muted" style={{marginTop:4}}>Staff Time Tracker</p>
+      </div>
+
+      {step==='select'&&(
+        <div style={{width:'100%',maxWidth:360}}>
+          <p style={{fontWeight:700,fontSize:15,marginBottom:12,textAlign:'center',color:'var(--muted)'}}>Select your name to sign in</p>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {activeStaff.map(s=>{
+              const u=users.find(u=>u.staffId===s.id);if(!u)return null;
+              const avatarBg=s.role==='manager'?'var(--purple-light)':s.role==='supervisor'?'var(--teal-light)':'var(--pink-light)';
+              const avatarColor=s.role==='manager'?'var(--purple)':s.role==='supervisor'?'var(--teal)':'var(--pink)';
+              return(
+                <button key={s.id} className="login-card" onClick={()=>handleSelect(u)}>
+                  <div className="avatar" style={{background:avatarBg,color:avatarColor}}>{getInitials(s.fullName)}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:14,color:'var(--text)'}}>{s.fullName}</div>
+                    <div className="muted" style={{textTransform:'capitalize',fontSize:12}}>{s.role} · {s.department}</div>
+                  </div>
+                  <span style={{color:'var(--purple-mid)',fontSize:18}}>›</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {step==='pin'&&selProfile&&(
+        <div style={{width:'100%',maxWidth:300,textAlign:'center'}}>
+          <div className="avatar" style={{width:56,height:56,margin:'0 auto 14px',fontSize:20,background:'var(--purple-light)',color:'var(--purple)'}}>{getInitials(selProfile.fullName)}</div>
+          <p style={{fontWeight:800,fontSize:17,marginBottom:4}}>{selProfile.fullName}</p>
+          <p className="muted" style={{marginBottom:'1.5rem'}}>Enter your 4-digit PIN</p>
+          <div className="pin-input">
+            {pin.map((v,i)=>(
+              <input key={i} ref={refs[i]} className="pin-dot" type="password" inputMode="numeric" maxLength={1} value={v} onChange={e=>handleChange(i,e.target.value)} onKeyDown={e=>handleKeyDown(i,e)} />
+            ))}
+          </div>
+          {err&&<div className="alert alert-error">{err}</div>}
+          <button className="pill pill-ghost mt-2" onClick={()=>{setStep('select');setSelected(null)}}>← Back</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── TOP BAR ───────────────────────────────────────────────
+function TopBar({user,profile,onLogout,onReset}){
+  const [menu,setMenu]=useState(false);
+  return(
+    <div className="topbar">
+      <div className="row gap-1">
+        <span style={{fontSize:22}}>🎉</span>
+        <span style={{fontWeight:900,color:'var(--purple)',fontSize:16}}>Kids Complex</span>
+      </div>
+      <div className="row gap-1">
+        <span className="muted" style={{fontSize:12,textTransform:'capitalize'}}>{user.role}</span>
+        <div style={{position:'relative'}}>
+          <button onClick={()=>setMenu(!menu)} style={{background:'var(--purple-light)',border:'none',borderRadius:'50%',width:36,height:36,cursor:'pointer',fontWeight:800,color:'var(--purple)',fontSize:13}}>
+            {getInitials(profile?.fullName||user.username)}
+          </button>
+          {menu&&(
+            <div style={{position:'absolute',right:0,top:44,background:'var(--card)',border:'1px solid var(--border)',borderRadius:'var(--radius-sm)',padding:'6px',zIndex:300,minWidth:150,boxShadow:'0 4px 20px rgba(0,0,0,0.12)'}}>
+              <div style={{padding:'8px 10px',fontSize:13,fontWeight:700,color:'var(--text)',borderBottom:'1px solid var(--border)',marginBottom:4}}>{profile?.fullName}</div>
+              <button onClick={()=>{setMenu(false);onLogout()}} style={{width:'100%',padding:'8px 10px',background:'none',border:'none',cursor:'pointer',fontSize:13,color:'var(--red)',textAlign:'left',borderRadius:6,fontWeight:600}}>Sign Out</button>
+              {onReset&&<button onClick={()=>{if(window.confirm('Reset ALL data back to demo data? This cannot be undone.')){setMenu(false);onReset();}}} style={{width:'100%',padding:'8px 10px',background:'none',border:'none',cursor:'pointer',fontSize:12,color:'var(--muted)',textAlign:'left',borderRadius:6}}>↺ Reset demo data</button>}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── MANAGER DASHBOARD ─────────────────────────────────────
+function ManagerDashboard({staff,rota,attendance,holidays,absences}){
+  const todayIdx=getTodayIdx();
+  const weekRota=rota.find(r=>r.weekStartDate===THIS_SATURDAY);
+  const todayShifts=weekRota?weekRota.shifts.filter(s=>s.day===todayIdx):[];
+  const todayAtt=attendance.filter(a=>a.date===TODAY);
+  const pendingHols=holidays.filter(h=>h.status==='pending');
+  const pendingAbs=absences.filter(a=>!a.approvedBy);
+  const weekEnd=weekEndDate(THIS_SATURDAY);
+  const allWeekAtt=attendance.filter(a=>a.date>=THIS_SATURDAY&&a.date<=weekEnd);
+  const weekSchedHrs=weekRota?weekRota.shifts.reduce((acc,s)=>acc+Math.max(0,(timeToMins(s.endTime)-timeToMins(s.startTime))/60),0):0;
+  const weekWorkedHrs=allWeekAtt.reduce((acc,a)=>acc+(a.paidHours||0),0);
+
+  return(
+    <div className="page">
+      <div className="mb-2">
+        <h1 className="heading">Good morning! 👋</h1>
+        <p className="muted">{new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</p>
+      </div>
+      <div className="grid-2 mb-2">
+        <div className="stat-card"><div className="muted" style={{fontSize:11}}>Scheduled Today</div><div className="stat-num" style={{color:'var(--purple)'}}>{todayShifts.length}</div></div>
+        <div className="stat-card"><div className="muted" style={{fontSize:11}}>Attendance Logged</div><div className="stat-num" style={{color:'var(--teal)'}}>{todayAtt.length}</div></div>
+        <div className="stat-card"><div className="muted" style={{fontSize:11}}>Late Today</div><div className="stat-num" style={{color:'var(--orange)'}}>{todayAtt.filter(a=>a.status==='late').length}</div></div>
+        <div className="stat-card"><div className="muted" style={{fontSize:11}}>Leave Pending</div><div className="stat-num" style={{color:'var(--pink)'}}>{pendingHols.length}</div></div>
+      </div>
+      <div className="grid-2 mb-2">
+        <div className="stat-card"><div className="muted" style={{fontSize:11}}>Scheduled Hrs (wk)</div><div className="stat-num" style={{color:'var(--purple)',fontSize:22}}>{weekSchedHrs.toFixed(1)}</div></div>
+        <div className="stat-card"><div className="muted" style={{fontSize:11}}>Worked Hrs (wk)</div><div className="stat-num" style={{color:'var(--teal)',fontSize:22}}>{weekWorkedHrs.toFixed(1)}</div></div>
+      </div>
+
+      {todayShifts.length>0&&(
+        <div className="card mb-2">
+          <div className="subheading mb-1">📅 Today's Schedule</div>
+          {todayShifts.map(sh=>{
+            const s=staff.find(x=>x.id===sh.staffId);if(!s)return null;
+            const att=todayAtt.find(a=>a.staffId===sh.staffId);
+            const statusClass=att?att.status==='late'?'badge-late':att.status==='early'?'badge-early':'badge-ontime':'badge-info';
+            const statusLabel=att?(att.clockIn?att.status:'absent'):'scheduled';
+            return(
+              <div key={sh.id} className="list-item">
+                <div className="avatar" style={{width:32,height:32,background:'var(--purple-light)',color:'var(--purple)',fontSize:11}}>{getInitials(s.fullName)}</div>
+                <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>{s.fullName}</div><div className="muted">{sh.startTime}–{sh.endTime} · {sh.department}</div></div>
+                <span className={`badge ${statusClass}`}>{statusLabel}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {pendingHols.length>0&&(
+        <div className="card mb-2">
+          <div className="subheading mb-1">🌴 Pending Leave</div>
+          {pendingHols.map(h=>{
+            const s=staff.find(x=>x.id===h.staffId);
+            return(
+              <div key={h.id} className="list-item">
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:14}}>{s?.fullName}</div>
+                  <div className="muted">{formatDate(h.startDate)} – {formatDate(h.endDate)}</div>
+                  {h.reason&&<div className="muted">{h.reason}</div>}
+                </div>
+                <span className="badge badge-pending">Pending</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {pendingAbs.length>0&&(
+        <div className="card mb-2">
+          <div className="subheading mb-1">🔔 Reports Awaiting Review</div>
+          {pendingAbs.map(a=>(
+            <div key={a.id} className="list-item">
+              <div style={{flex:1}}>
+                <div style={{fontWeight:600,fontSize:14}}>{a.staffName}</div>
+                <div className="muted">{a.type} · {formatDate(a.date)}</div>
+                <div style={{fontSize:13}}>{a.comment}</div>
+              </div>
+              <span className={`badge ${a.type==='late'?'badge-late':'badge-absent'}`}>{a.type}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── SUPERVISOR DASHBOARD ──────────────────────────────────
+function SupervisorDashboard({staff,rota,attendance,absences,onApproveAbsence}){
+  const todayIdx=getTodayIdx();
+  const weekRota=rota.find(r=>r.weekStartDate===THIS_SATURDAY);
+  const todayShifts=weekRota?weekRota.shifts.filter(s=>s.day===todayIdx):[];
+  const todayAtt=attendance.filter(a=>a.date===TODAY);
+  const pending=absences.filter(a=>!a.approvedBy);
+  return(
+    <div className="page">
+      <div className="mb-2"><h1 className="heading">Supervisor View 👀</h1><p className="muted">{new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</p></div>
+      <div className="card mb-2">
+        <div className="subheading mb-1">Today's Team ({todayShifts.length})</div>
+        {todayShifts.length===0&&<p className="muted">No shifts scheduled today.</p>}
+        {todayShifts.map(sh=>{
+          const s=staff.find(x=>x.id===sh.staffId);if(!s)return null;
+          const att=todayAtt.find(a=>a.staffId===sh.staffId);
+          return(
+            <div key={sh.id} className="list-item">
+              <div className="avatar" style={{width:32,height:32,background:'var(--teal-light)',color:'var(--teal)',fontSize:11}}>{getInitials(s.fullName)}</div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>{s.fullName}</div><div className="muted">{sh.startTime}–{sh.endTime}</div></div>
+              {att?<span className={`badge ${att.status==='late'?'badge-late':'badge-ontime'}`}>{att.status}</span>:<span className="badge badge-info">Scheduled</span>}
+            </div>
+          );
+        })}
+      </div>
+      {pending.length>0&&(
+        <div className="card">
+          <div className="subheading mb-1">⚠️ Reports to Approve</div>
+          {pending.map(a=>(
+            <div key={a.id} className="list-item">
+              <div style={{flex:1}}>
+                <div style={{fontWeight:600,fontSize:14}}>{a.staffName}</div>
+                <div className="muted">{a.type} · {formatDate(a.date)}</div>
+                <div style={{fontSize:13}}>{a.comment}</div>
+              </div>
+              <button className="pill pill-teal pill-sm" onClick={()=>onApproveAbsence(a.id)}>Approve</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── STAFF DASHBOARD ───────────────────────────────────────
+function StaffDashboard({profile,rota,attendance,holidays}){
+  if(!profile)return<div className="page"><p>Profile not found.</p></div>;
+  const myHols=holidays.filter(h=>h.staffId===profile.id);
+  const todayAtt=attendance.find(a=>a.staffId===profile.id&&a.date===TODAY);
+  const upcoming=[];
+  rota.forEach(week=>{
+    const dates=weekDates(week.weekStartDate);
+    week.shifts.filter(s=>s.staffId===profile.id).forEach(s=>{if(dates[s.day]>=TODAY)upcoming.push({...s,date:dates[s.day]})});
+  });
+  upcoming.sort((a,b)=>a.date.localeCompare(b.date));
+  return(
+    <div className="page">
+      <div className="mb-2"><h1 className="heading">Hi, {profile.fullName.split(' ')[0]}! 😊</h1><p className="muted">{new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</p></div>
+      {todayAtt&&(
+        <div className="card mb-2" style={{borderLeft:'4px solid var(--teal)'}}>
+          <div className="subheading mb-1">⏱️ Today's Attendance</div>
+          <div className="grid-2">
+            <div><span className="muted">Clocked In</span><div style={{fontWeight:700}}>{todayAtt.clockIn||'–'}</div></div>
+            <div><span className="muted">Clocked Out</span><div style={{fontWeight:700}}>{todayAtt.clockOut||'–'}</div></div>
+            <div><span className="muted">Paid Hours</span><div style={{fontWeight:700}}>{todayAtt.paidHours.toFixed(2)}h</div></div>
+            <div><span className="muted">Status</span><span className={`badge badge-${todayAtt.status==='late'?'late':todayAtt.status==='early'?'early':'ontime'}`}>{todayAtt.status}</span></div>
+          </div>
+        </div>
+      )}
+      {upcoming.slice(0,5).length>0&&(
+        <div className="card mb-2">
+          <div className="subheading mb-1">📅 Upcoming Shifts</div>
+          {upcoming.slice(0,5).map((s,i)=>(
+            <div key={i} className="list-item">
+              <div style={{background:'var(--purple-light)',borderRadius:8,padding:'6px 10px',textAlign:'center',minWidth:46}}>
+                <div style={{fontSize:10,color:'var(--purple)',fontWeight:700}}>{new Date(s.date+'T12:00').toLocaleDateString('en-GB',{weekday:'short'})}</div>
+                <div style={{fontSize:17,fontWeight:900,color:'var(--purple)'}}>{new Date(s.date+'T12:00').getDate()}</div>
+              </div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>{s.startTime} – {s.endTime}</div><div className="muted">{s.department}</div></div>
+              {s.date===TODAY&&<span className="badge badge-info">Today</span>}
+            </div>
+          ))}
+        </div>
+      )}
+      {myHols.length>0&&(
+        <div className="card">
+          <div className="subheading mb-1">🌴 Leave Requests</div>
+          {myHols.map(h=>(
+            <div key={h.id} className="list-item">
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>{formatDate(h.startDate)} – {formatDate(h.endDate)}</div>{h.reason&&<div className="muted">{h.reason}</div>}</div>
+              <span className={`badge badge-${h.status}`}>{h.status}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── ROTA BUILDER ──────────────────────────────────────────
+function RotaBuilder({staff,rota,setRota,templates,setTemplates,currentUser,showToast,canEdit}){
+  const [viewWeek,setViewWeek]=useState(THIS_SATURDAY);
+  const [editCell,setEditCell]=useState(null);
+  const [tab,setTab]=useState('rota');
+  const [showTplModal,setShowTplModal]=useState(false);
+  const [showCopyModal,setShowCopyModal]=useState(false);
+  const [tplName,setTplName]=useState('');
+
+  const dates=weekDates(viewWeek);
+  const weekRota=rota.find(r=>r.weekStartDate===viewWeek);
+  const shifts=weekRota?weekRota.shifts:[];
+  const activeStaff=staff.filter(s=>s.employmentStatus==='active');
+
+  function getShift(staffId,day){return shifts.find(s=>s.staffId===staffId&&s.day===day)}
+
+  function saveShift(staffId,day,startTime,endTime,department,shiftType){
+    if(!canEdit)return;
+    const newSh={id:genId('SH'),staffId,day,startTime,endTime,department,shiftType};
+    if(!weekRota){
+      setRota(p=>[...p,{id:genId('R'),weekStartDate:viewWeek,shifts:[newSh]}]);
+    }else{
+      setRota(p=>p.map(r=>r.weekStartDate===viewWeek?{...r,shifts:[...r.shifts.filter(s=>!(s.staffId===staffId&&s.day===day)),newSh]}:r));
+    }
+    setEditCell(null);showToast('Shift saved ✅');
+  }
+
+  function removeShift(staffId,day){
+    if(!canEdit)return;
+    setRota(p=>p.map(r=>r.weekStartDate===viewWeek?{...r,shifts:r.shifts.filter(s=>!(s.staffId===staffId&&s.day===day))}:r));
+    setEditCell(null);showToast('Shift removed');
+  }
+
+  function saveTpl(){
+    if(!tplName.trim()){showToast('Enter a template name','error');return}
+    setTemplates(p=>[...p,{id:genId('T'),name:tplName.trim(),createdAt:TODAY,createdBy:currentUser.staffId,shifts:shifts.map(({id,...r})=>r)}]);
+    setShowTplModal(false);setTplName('');showToast('Template saved ✅');
+  }
+
+  function applyTpl(tpl,targetWeek){
+    const newShifts=tpl.shifts.map(s=>({...s,id:genId('SH')}));
+    const ex=rota.find(r=>r.weekStartDate===targetWeek);
+    if(ex){setRota(p=>p.map(r=>r.weekStartDate===targetWeek?{...r,shifts:newShifts}:r))}
+    else{setRota(p=>[...p,{id:genId('R'),weekStartDate:targetWeek,shifts:newShifts}])}
+    setShowCopyModal(false);showToast('Template applied ✅');
+  }
+
+  return(
+    <div className="page" style={{paddingLeft:8,paddingRight:8}}>
+      <div style={{padding:'0 8px'}}>
+        <div className="tab-bar">
+          <button className={`tab${tab==='rota'?' active':''}`} onClick={()=>setTab('rota')}>Weekly Rota</button>
+          <button className={`tab${tab==='tpl'?' active':''}`} onClick={()=>setTab('tpl')}>Templates</button>
+        </div>
+      </div>
+
+      {tab==='rota'&&<>
+        <div className="week-nav" style={{padding:'0 8px'}}>
+          <button onClick={()=>setViewWeek(addWeeks(viewWeek,-1))}>‹ Prev</button>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontWeight:700,fontSize:13}}>{formatDate(viewWeek)} – {formatDate(dates[6])}</div>
+            {viewWeek===THIS_SATURDAY&&<div className="muted" style={{fontSize:11}}>This week</div>}
+          </div>
+          <button onClick={()=>setViewWeek(addWeeks(viewWeek,1))}>Next ›</button>
+        </div>
+        {canEdit&&(
+          <div style={{display:'flex',gap:8,padding:'0 8px',marginBottom:12}}>
+            <button className="pill pill-ghost pill-sm" onClick={()=>setShowTplModal(true)}>💾 Save Template</button>
+            <button className="pill pill-ghost pill-sm" onClick={()=>setShowCopyModal(true)}>📋 Apply Template</button>
+          </div>
+        )}
+        <div style={{overflowX:'auto',padding:'0 4px'}}>
+          <table style={{borderCollapse:'separate',borderSpacing:0,minWidth:480,width:'100%'}}>
+            <thead>
+              <tr>
+                <th style={{padding:'6px 4px 6px 8px',textAlign:'left',fontWeight:700,color:'var(--muted)',fontSize:11,width:80}}>Staff</th>
+                {DAYS.map((d,i)=>(
+                  <th key={d} style={{padding:'6px 2px',textAlign:'center',fontWeight:700,fontSize:11,color:dates[i]===TODAY?'var(--purple)':'var(--muted)',background:dates[i]===TODAY?'var(--purple-light)':'transparent',borderRadius:6}}>
+                    {d}<br/><span style={{fontWeight:400,fontSize:10}}>{new Date(dates[i]+'T12:00').getDate()}</span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {activeStaff.map(s=>(
+                <tr key={s.id}>
+                  <td style={{padding:'2px 4px 2px 8px',verticalAlign:'middle'}}>
+                    <div style={{fontWeight:700,fontSize:11}}>{s.fullName.split(' ')[0]}</div>
+                    <div style={{fontSize:9,color:'var(--muted)'}}>{s.department.split(' ')[0]}</div>
+                  </td>
+                  {DAYS.map((_,day)=>{
+                    const sh=getShift(s.id,day);
+                    return(
+                      <td key={day} style={{padding:1,verticalAlign:'middle'}}>
+                        <div className="rota-cell" onClick={()=>canEdit&&setEditCell({staffId:s.id,staffName:s.fullName,day,existing:sh})} style={{background:dates[day]===TODAY?'var(--purple-light)':'transparent',cursor:canEdit?'pointer':'default',minWidth:46}}>
+                          {sh?(
+                            <div className={`shift-chip ${DEPT_COLORS[sh.department]||''}`}>
+                              <div style={{fontSize:10,fontWeight:700}}>{sh.startTime}</div>
+                              <div style={{fontSize:9,opacity:0.75}}>{sh.shiftType}</div>
+                            </div>
+                          ):(canEdit&&<span style={{color:'var(--border)',fontSize:18,lineHeight:1}}>+</span>)}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>}
+
+      {tab==='tpl'&&(
+        <div style={{padding:'0 8px'}}>
+          <div className="subheading mb-2">Saved Templates</div>
+          {templates.length===0&&<div className="card text-center" style={{color:'var(--muted)',padding:'2rem'}}>No templates yet.<br/>Build a rota and save it.</div>}
+          {templates.map(t=>(
+            <div key={t.id} className="card-sm mb-1">
+              <div className="row-between">
+                <div><div style={{fontWeight:700}}>{t.name}</div><div className="muted">{t.shifts.length} shifts · {formatDate(t.createdAt)}</div></div>
+                {canEdit&&<button className="pill pill-ghost pill-sm" onClick={()=>setShowCopyModal(t)}>Apply</button>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {editCell&&<ShiftModal cell={editCell} onSave={saveShift} onRemove={removeShift} onClose={()=>setEditCell(null)} />}
+
+      {showTplModal&&(
+        <div className="modal-overlay" onClick={()=>setShowTplModal(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div className="row-between mb-2"><div className="modal-title">💾 Save as Template</div><button className="close-btn" onClick={()=>setShowTplModal(false)}>×</button></div>
+            <div className="field"><label className="label">Template Name</label><input className="input" value={tplName} onChange={e=>setTplName(e.target.value)} placeholder="e.g. Standard Week" /></div>
+            <div className="muted mb-2">{shifts.length} shifts from {formatDate(viewWeek)} will be saved.</div>
+            <button className="pill pill-primary" style={{width:'100%'}} onClick={saveTpl}>Save Template</button>
+          </div>
+        </div>
+      )}
+
+      {showCopyModal&&(
+        <CopyTemplateModal templates={templates} onApply={applyTpl} onClose={()=>setShowCopyModal(false)} />
+      )}
+    </div>
+  );
+}
+
+function ShiftModal({cell,onSave,onRemove,onClose}){
+  const {staffId,staffName,day,existing}=cell;
+  const [preset,setPreset]=useState(existing?'Custom':'Full');
+  const [start,setStart]=useState(existing?existing.startTime:'08:00');
+  const [end,setEnd]=useState(existing?existing.endTime:'16:00');
+  const [dept,setDept]=useState(existing?existing.department:DEPARTMENTS[0]);
+
+  function pickPreset(p){
+    setPreset(p);
+    const f=SHIFT_PRESETS.find(x=>x.label===p);
+    if(f&&p!=='Custom'){setStart(f.start);setEnd(f.end)}
+  }
+  return(
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="row-between mb-2"><div className="modal-title">{existing?'Edit':'Add'} Shift</div><button className="close-btn" onClick={onClose}>×</button></div>
+        <div className="muted mb-2" style={{fontWeight:600}}>{staffName} · {DAYS[day]}</div>
+        <div className="field">
+          <label className="label">Preset</label>
+          <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+            {SHIFT_PRESETS.map(p=><button key={p.label} className={`pill pill-sm ${preset===p.label?'pill-primary':'pill-ghost'}`} onClick={()=>pickPreset(p.label)}>{p.label}</button>)}
+          </div>
+        </div>
+        <div className="grid-2">
+          <div className="field"><label className="label">Start Time</label><input className="input" type="time" value={start} onChange={e=>{setStart(e.target.value);setPreset('Custom')}} /></div>
+          <div className="field"><label className="label">End Time</label><input className="input" type="time" value={end} onChange={e=>{setEnd(e.target.value);setPreset('Custom')}} /></div>
+        </div>
+        <div className="field"><label className="label">Department</label><select className="select" value={dept} onChange={e=>setDept(e.target.value)}>{DEPARTMENTS.map(d=><option key={d}>{d}</option>)}</select></div>
+        <div className="row mt-2">
+          <button className="pill pill-primary" style={{flex:1}} onClick={()=>{if(!start||!end){alert('Set start and end times');return}onSave(staffId,day,start,end,dept,preset)}}>Save Shift</button>
+          {existing&&<button className="pill pill-danger" onClick={()=>onRemove(staffId,day)}>Remove</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CopyTemplateModal({templates,onApply,onClose}){
+  const [selTpl,setSelTpl]=useState(templates[0]?.id||'');
+  const [targetWeek,setTargetWeek]=useState(addWeeks(THIS_SATURDAY,1));
+  const tpl=templates.find(t=>t.id===selTpl);
+  const futureWeeks=[1,2,3,4].map(n=>addWeeks(THIS_SATURDAY,n));
+  return(
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="row-between mb-2"><div className="modal-title">📋 Apply Template</div><button className="close-btn" onClick={onClose}>×</button></div>
+        <div className="field"><label className="label">Template</label>
+          <select className="select" value={selTpl} onChange={e=>setSelTpl(e.target.value)}>
+            {templates.map(t=><option key={t.id} value={t.id}>{t.name} ({t.shifts.length} shifts)</option>)}
+          </select>
+        </div>
+        <div className="field"><label className="label">Apply to week starting</label>
+          <select className="select" value={targetWeek} onChange={e=>setTargetWeek(e.target.value)}>
+            {futureWeeks.map(w=><option key={w} value={w}>{formatDate(w)}</option>)}
+          </select>
+        </div>
+        {tpl&&<div className="alert alert-info">{tpl.shifts.length} shifts will be copied to {formatDate(targetWeek)}</div>}
+        <div className="row">
+          <button className="pill pill-primary" style={{flex:1}} onClick={()=>{if(!tpl){showToast('Select a template','error');return}onApply(tpl,targetWeek)}}>Apply Template</button>
+          <button className="pill pill-ghost" onClick={onClose}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── MY ROTA (staff) ───────────────────────────────────────
+function MyRota({profile,rota}){
+  const [viewWeek,setViewWeek]=useState(THIS_SATURDAY);
+  const dates=weekDates(viewWeek);
+  const weekRota=rota.find(r=>r.weekStartDate===viewWeek);
+  const myShifts=weekRota?weekRota.shifts.filter(s=>s.staffId===profile?.id):[];
+  return(
+    <div className="page">
+      <h1 className="heading mb-2">My Rota 📅</h1>
+      <div className="week-nav">
+        <button onClick={()=>setViewWeek(addWeeks(viewWeek,-1))}>‹ Prev</button>
+        <div style={{textAlign:'center'}}><div style={{fontWeight:700,fontSize:14}}>{formatDate(viewWeek)} – {formatDate(dates[6])}</div></div>
+        <button onClick={()=>setViewWeek(addWeeks(viewWeek,1))}>Next ›</button>
+      </div>
+      {DAYS.map((d,i)=>{
+        const sh=myShifts.find(s=>s.day===i);
+        const isToday=dates[i]===TODAY;
+        return(
+          <div key={d} className="card-sm mb-1" style={{borderLeft:`4px solid ${isToday?'var(--purple)':sh?'var(--teal)':'var(--border)'}`,opacity:sh?1:0.55}}>
+            <div className="row-between">
+              <div>
+                <div style={{fontWeight:700,color:isToday?'var(--purple)':'var(--text)'}}>{d} · {new Date(dates[i]+'T12:00').getDate()}</div>
+                {sh?<div className="muted">{sh.startTime} – {sh.endTime} · {sh.department}</div>:<div className="muted">Day off</div>}
+              </div>
+              <div className="row gap-1">
+                {sh&&<span className={`dept-badge ${DEPT_COLORS[sh.department]||''}`}>{sh.shiftType}</span>}
+                {isToday&&<span className="badge badge-info">Today</span>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── STAFF MANAGEMENT ──────────────────────────────────────
+function StaffManagement({staff,setStaff,users,setUsers,showToast}){
+  const [showForm,setShowForm]=useState(false);
+  const [editTarget,setEditTarget]=useState(null);
+  const [filter,setFilter]=useState('active');
+
+  const filtered=staff.filter(s=>filter==='all'?true:s.employmentStatus===filter);
+
+  function handleSave(data){
+    if(editTarget){
+      // Update staff profile
+      setStaff(p=>p.map(s=>s.id===editTarget.id?{...s,...data}:s));
+      // Update PIN + role in users if changed
+      if(data.pin){
+        if(!/^\d{4}$/.test(data.pin)){showToast('PIN must be exactly 4 digits','error');return}
+        setUsers(p=>p.map(u=>u.staffId===editTarget.id?{...u,pin:data.pin,role:data.role}:u));
+      }
+      showToast('Staff record updated ✅');
+    }else{
+      if(!data.fullName.trim()){showToast('Name is required','error');return}
+      if(staff.find(s=>s.id===data.id)){showToast('Staff ID already exists','error');return}
+      if(isNaN(data.payRate)||data.payRate<0){showToast('Invalid pay rate','error');return}
+      if(!/^\d{4}$/.test(data.pin)){showToast('PIN must be exactly 4 digits','error');return}
+      setStaff(p=>[...p,{...data,complianceFields:{dbs:false,rightToWork:false},createdAt:TODAY}]);
+      setUsers(p=>[...p,{id:genId('U'),staffId:data.id,username:data.fullName.split(' ')[0].toLowerCase(),pin:data.pin,role:data.role}]);
+      showToast(`Staff member added ✅ PIN set to ${data.pin}`);
+    }
+    setShowForm(false);setEditTarget(null);
+  }
+
+  function archive(s){
+    setStaff(p=>p.map(x=>x.id===s.id?{...x,employmentStatus:'ex-staff',endDate:TODAY}:x));
+    showToast(`${s.fullName} archived`);
+  }
+
+  return(
+    <div className="page">
+      <div className="row-between mb-2">
+        <h1 className="heading">Staff 👥</h1>
+        <button className="pill pill-primary" onClick={()=>{setEditTarget(null);setShowForm(true)}}>+ Add</button>
+      </div>
+      <div className="tab-bar">
+        {[['active','Active'],['onboarding','Onboarding'],['ex-staff','Ex Staff'],['all','All']].map(([v,l])=>(
+          <button key={v} className={`tab${filter===v?' active':''}`} onClick={()=>setFilter(v)} style={{fontSize:11}}>{l}</button>
+        ))}
+      </div>
+      {filtered.length===0&&<div className="card text-center" style={{color:'var(--muted)',padding:'2rem'}}>No staff in this category.</div>}
+      {filtered.map(s=>{
+        const userRec=users.find(u=>u.staffId===s.id);
+        return(
+        <div key={s.id} className="card-sm mb-1">
+          <div className="row-between">
+            <div className="row gap-1">
+              <div className="avatar" style={{width:40,height:40,background:'var(--purple-light)',color:'var(--purple)',fontSize:13}}>{getInitials(s.fullName)}</div>
+              <div>
+                <div style={{fontWeight:700}}>{s.fullName}</div>
+                <div className="muted">{s.role} · {s.department}</div>
+                <div className="muted">£{s.payRate}/hr · ID: {s.id}</div>
+                {userRec&&<div style={{fontSize:12,marginTop:2,color:'var(--purple)',fontWeight:600}}>🔑 PIN: {userRec.pin}</div>}
+              </div>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:6}}>
+              <span className={`badge ${s.employmentStatus==='active'?'badge-active':s.employmentStatus==='onboarding'?'badge-pending':'badge-rejected'}`}>{s.employmentStatus}</span>
+              <div className="row gap-1">
+                <button className="pill pill-ghost pill-sm" onClick={()=>{setEditTarget(s);setShowForm(true)}}>Edit</button>
+                {s.employmentStatus!=='ex-staff'&&<button className="pill pill-sm" style={{background:'var(--orange-light)',color:'var(--orange)',border:'none',cursor:'pointer'}} onClick={()=>archive(s)}>Archive</button>}
+              </div>
+            </div>
+          </div>
+          {(!s.complianceFields?.dbs||!s.complianceFields?.rightToWork)&&(
+            <div className="alert alert-error mt-1" style={{marginTop:8,marginBottom:0}}>
+              ⚠️ {!s.complianceFields?.dbs&&'DBS pending'}{!s.complianceFields?.dbs&&!s.complianceFields?.rightToWork&&' · '}{!s.complianceFields?.rightToWork&&'Right to Work pending'}
+            </div>
+          )}
+        </div>
+        );
+      })}
+      {showForm&&<StaffFormModal existing={editTarget} staff={staff} users={users} onSave={handleSave} onClose={()=>{setShowForm(false);setEditTarget(null)}} />}
+    </div>
+  );
+}
+
+function StaffFormModal({existing,staff,users,onSave,onClose}){
+  const nextId=`S${String(Math.max(...staff.map(s=>parseInt(s.id.replace(/\D/g,''))||0),0)+1).padStart(3,'0')}`;
+  const existingPin=existing?users.find(u=>u.staffId===existing.id)?.pin||'':'';
+  const [form,setForm]=useState({
+    id:existing?.id||nextId,fullName:existing?.fullName||'',
+    role:existing?.role||'staff',department:existing?.department||DEPARTMENTS[0],
+    payRate:existing?.payRate||11.44,availability:existing?.availability||[],
+    employmentStatus:existing?.employmentStatus||'active',
+    startDate:existing?.startDate||TODAY,endDate:existing?.endDate||'',
+    notes:existing?.notes||'',pin:existingPin
+  });
+  const [showPin,setShowPin]=useState(false);
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const toggleDay=d=>set('availability',form.availability.includes(d)?form.availability.filter(x=>x!==d):[...form.availability,d]);
+  const pinValid=/^\d{4}$/.test(form.pin);
+  return(
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="row-between mb-2"><div className="modal-title">{existing?'Edit Staff':'Add Staff Member'}</div><button className="close-btn" onClick={onClose}>×</button></div>
+        <div className="field"><label className="label">Staff ID</label><input className="input" value={form.id} onChange={e=>set('id',e.target.value.toUpperCase())} disabled={!!existing} /></div>
+        <div className="field"><label className="label">Full Name *</label><input className="input" value={form.fullName} onChange={e=>set('fullName',e.target.value)} placeholder="Jane Smith" /></div>
+        <div className="grid-2">
+          <div className="field"><label className="label">Role</label><select className="select" value={form.role} onChange={e=>set('role',e.target.value)}><option value="staff">Staff</option><option value="supervisor">Supervisor</option><option value="manager">Manager</option></select></div>
+          <div className="field"><label className="label">Pay Rate £/hr</label><input className="input" type="number" step="0.01" min="0" value={form.payRate} onChange={e=>set('payRate',parseFloat(e.target.value)||0)} /></div>
+        </div>
+        <div className="field">
+          <label className="label">{existing?'Change PIN (4 digits)':'Login PIN * (4 digits)'}</label>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <input
+              className="input"
+              type={showPin?'text':'password'}
+              inputMode="numeric"
+              maxLength={4}
+              value={form.pin}
+              onChange={e=>set('pin',e.target.value.replace(/\D/g,'').slice(0,4))}
+              placeholder="e.g. 1234"
+              style={{letterSpacing:showPin?2:4,fontWeight:700,flex:1}}
+            />
+            <button type="button" onClick={()=>setShowPin(p=>!p)} style={{background:'var(--purple-light)',border:'none',borderRadius:'var(--radius-sm)',padding:'9px 12px',cursor:'pointer',color:'var(--purple)',fontSize:13,fontWeight:600,whiteSpace:'nowrap'}}>
+              {showPin?'Hide':'Show'}
+            </button>
+          </div>
+          {form.pin&&!pinValid&&<div style={{color:'var(--red)',fontSize:12,marginTop:4}}>Must be exactly 4 numbers</div>}
+          {pinValid&&<div style={{color:'var(--green)',fontSize:12,marginTop:4}}>✓ PIN is valid</div>}
+        </div>
+        <div className="field"><label className="label">Department</label><select className="select" value={form.department} onChange={e=>set('department',e.target.value)}>{DEPARTMENTS.map(d=><option key={d}>{d}</option>)}</select></div>
+        <div className="field"><label className="label">Status</label><select className="select" value={form.employmentStatus} onChange={e=>set('employmentStatus',e.target.value)}><option value="active">Active</option><option value="onboarding">Onboarding</option><option value="paused">Paused</option><option value="ex-staff">Ex Staff</option></select></div>
+        <div className="grid-2">
+          <div className="field"><label className="label">Start Date</label><input className="input" type="date" value={form.startDate} onChange={e=>set('startDate',e.target.value)} /></div>
+          <div className="field"><label className="label">End Date</label><input className="input" type="date" value={form.endDate} onChange={e=>set('endDate',e.target.value)} /></div>
+        </div>
+        <div className="field"><label className="label">Availability</label>
+          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+            {DAYS.map(d=><button key={d} className={`pill pill-sm ${form.availability.includes(d)?'pill-primary':'pill-ghost'}`} onClick={()=>toggleDay(d)}>{d}</button>)}
+          </div>
+        </div>
+        <div className="field"><label className="label">Notes</label><textarea className="input" rows={2} value={form.notes} onChange={e=>set('notes',e.target.value)} placeholder="Any notes..." /></div>
+        <div className="row mt-2">
+          <button className="pill pill-primary" style={{flex:1}} onClick={()=>onSave(form)}>Save</button>
+          <button className="pill pill-ghost" onClick={onClose}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ATTENDANCE MANAGER ────────────────────────────────────
+function AttendanceManager({staff,attendance,setAttendance,rota,showToast,role}){
+  const [selDate,setSelDate]=useState(TODAY);
+  const [showModal,setShowModal]=useState(false);
+  const [editRec,setEditRec]=useState(null);
+
+  const dayIdx=jsdayToIdx(new Date(selDate+'T12:00').getDay());
+  const weekStart=getSaturdayOfWeek(selDate);
+  const weekRota=rota.find(r=>r.weekStartDate===weekStart);
+  const dayShifts=weekRota?weekRota.shifts.filter(s=>s.day===dayIdx):[];
+  const dayRecs=attendance.filter(a=>a.date===selDate);
+
+  function handleSave(data){
+    const completedBreakMins=(data.breaks||[]).filter(b=>b.breakOut&&b.breakIn).reduce((acc,b)=>acc+(timeToMins(b.breakIn)-timeToMins(b.breakOut)),0);
+    const {grossHours,paidHours,breakMinutes}=calculatePaidHours(data.clockIn,data.clockOut,completedBreakMins);
+    const status=getAttendanceStatus(data.scheduledStart,data.clockIn);
+    const earlyLate=data.clockIn?timeToMins(data.clockIn)-timeToMins(data.scheduledStart):0;
+    if(editRec){
+      setAttendance(p=>p.map(a=>a.id===editRec.id?{...a,...data,grossHours,paidHours,breakMinutes,status,earlyLateMinutes:earlyLate}:a));
+      showToast('Record updated');
+    }else{
+      if(!data.staffId){showToast('Select a staff member','error');return}
+      if(attendance.find(a=>a.staffId===data.staffId&&a.date===data.date)){showToast('Record already exists','error');return}
+      setAttendance(p=>[...p,{id:genId('A'),...data,grossHours,paidHours,breakMinutes,status,earlyLateMinutes:earlyLate,notes:''}]);
+      showToast('Record added');
+    }
+    setShowModal(false);setEditRec(null);
+  }
+
+  return(
+    <div className="page">
+      <h1 className="heading mb-2">Attendance ⏱️</h1>
+      <div className="field">
+        <label className="label">Date</label>
+        <input className="input" type="date" value={selDate} onChange={e=>setSelDate(e.target.value)} style={{marginBottom:12}} />
+      </div>
+      <div className="row-between mb-2">
+        <div className="subheading">{formatDate(selDate)}</div>
+        {role==='manager'&&<button className="pill pill-primary pill-sm" onClick={()=>{setEditRec(null);setShowModal(true)}}>+ Add</button>}
+      </div>
+
+      {dayShifts.map(sh=>{
+        const s=staff.find(x=>x.id===sh.staffId);if(!s)return null;
+        const rec=dayRecs.find(a=>a.staffId===sh.staffId);
+        return(
+          <div key={sh.id} className="card-sm mb-1">
+            <div className="row-between">
+              <div className="row gap-1">
+                <div className="avatar" style={{width:32,height:32,background:'var(--purple-light)',color:'var(--purple)',fontSize:11}}>{getInitials(s.fullName)}</div>
+                <div>
+                  <div style={{fontWeight:700,fontSize:13}}>{s.fullName}</div>
+                  <div className="muted">Sched: {sh.startTime}–{sh.endTime}</div>
+                  {rec&&<div className="muted">In: {rec.clockIn||'–'} · Out: {rec.clockOut||'–'} · Break: {rec.breakMinutes||0}min · {rec.paidHours.toFixed(2)}h paid</div>}
+                </div>
+              </div>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:5}}>
+                <span className={`badge ${rec?rec.status==='late'?'badge-late':rec.status==='early'?'badge-early':'badge-ontime':'badge-info'}`}>
+                  {rec?rec.status:'scheduled'}
+                </span>
+                {role==='manager'&&<button className="pill pill-ghost pill-sm" onClick={()=>{setEditRec(rec||{staffId:sh.staffId,date:selDate,scheduledStart:sh.startTime,scheduledEnd:sh.endTime,clockIn:'',clockOut:''});setShowModal(true)}}>{rec?'Edit':'Log'}</button>}
+              </div>
+            </div>
+            {rec?.breakMinutes>0&&<div className="muted" style={{fontSize:11,marginTop:4}}>Auto 30min break deducted (shift &gt;4h)</div>}
+            {rec?.earlyLateMinutes>5&&<div style={{fontSize:11,color:'var(--orange)',marginTop:2}}>⚠️ {rec.earlyLateMinutes} min late</div>}
+          </div>
+        );
+      })}
+
+      {dayRecs.filter(r=>!dayShifts.find(s=>s.staffId===r.staffId)).map(rec=>{
+        const s=staff.find(x=>x.id===rec.staffId);
+        return(
+          <div key={rec.id} className="card-sm mb-1">
+            <div className="row-between">
+              <div><div style={{fontWeight:700}}>{s?.fullName} <span className="muted">(ad hoc)</span></div><div className="muted">{rec.clockIn}–{rec.clockOut} · {rec.paidHours.toFixed(2)}h</div></div>
+              <div className="row gap-1">
+                <span className={`badge badge-${rec.status==='late'?'late':'ontime'}`}>{rec.status}</span>
+                {role==='manager'&&<button className="pill pill-ghost pill-sm" onClick={()=>{setEditRec(rec);setShowModal(true)}}>Edit</button>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {dayShifts.length===0&&dayRecs.length===0&&<div className="card text-center" style={{color:'var(--muted)',padding:'2rem'}}>No scheduled shifts or records for this date.</div>}
+
+      {showModal&&<AttendanceModal staff={staff} existing={editRec} date={selDate} onSave={handleSave} onClose={()=>{setShowModal(false);setEditRec(null)}} />}
+    </div>
+  );
+}
+
+function AttendanceModal({staff,existing,date,onSave,onClose}){
+  const [form,setForm]=useState({
+    staffId:existing?.staffId||'',date:existing?.date||date,
+    scheduledStart:existing?.scheduledStart||'09:00',scheduledEnd:existing?.scheduledEnd||'17:00',
+    clockIn:existing?.clockIn||'',clockOut:existing?.clockOut||''
+  });
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const preview=form.clockIn&&form.clockOut?calculatePaidHours(form.clockIn,form.clockOut,0):null;
+  const activeStaff=staff.filter(s=>s.employmentStatus==='active');
+  return(
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="row-between mb-2"><div className="modal-title">Log Attendance</div><button className="close-btn" onClick={onClose}>×</button></div>
+        {!existing?.staffId&&(
+          <div className="field"><label className="label">Staff Member</label>
+            <select className="select" value={form.staffId} onChange={e=>set('staffId',e.target.value)}>
+              <option value="">Select...</option>
+              {activeStaff.map(s=><option key={s.id} value={s.id}>{s.fullName}</option>)}
+            </select>
+          </div>
+        )}
+        <div className="grid-2">
+          <div className="field"><label className="label">Sched. Start</label><input className="input" type="time" value={form.scheduledStart} onChange={e=>set('scheduledStart',e.target.value)} /></div>
+          <div className="field"><label className="label">Sched. End</label><input className="input" type="time" value={form.scheduledEnd} onChange={e=>set('scheduledEnd',e.target.value)} /></div>
+          <div className="field"><label className="label">Clock In</label><input className="input" type="time" value={form.clockIn} onChange={e=>set('clockIn',e.target.value)} /></div>
+          <div className="field"><label className="label">Clock Out</label><input className="input" type="time" value={form.clockOut} onChange={e=>set('clockOut',e.target.value)} /></div>
+        </div>
+        {preview&&(
+          <div className="alert alert-info">
+            Gross: {preview.grossHours.toFixed(2)}h · Break: {preview.breakMinutes}min · <strong>Paid: {preview.paidHours.toFixed(2)}h</strong>
+            {preview.grossHours>4?' (30min break auto-deducted)':''}
+          </div>
+        )}
+        <div className="row mt-2">
+          <button className="pill pill-primary" style={{flex:1}} onClick={()=>onSave(form)}>Save Record</button>
+          <button className="pill pill-ghost" onClick={onClose}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── CLOCK IN/OUT (all roles) ──────────────────────────────
+function ClockInOut({profile,rota,attendance,setAttendance,showToast}){
+  const [now,setNow]=useState(new Date());
+  useEffect(()=>{const t=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(t)},[]);
+
+  const todayIdx=getTodayIdx();
+  const weekRota=rota.find(r=>r.weekStartDate===THIS_SATURDAY);
+  const todayShift=weekRota?weekRota.shifts.find(s=>s.staffId===profile?.id&&s.day===todayIdx):null;
+  const rec=attendance.find(a=>a.staffId===profile?.id&&a.date===TODAY);
+
+  // Derive break state from the breaks array on the record
+  const breaks=rec?.breaks||[];
+  const onBreak=breaks.length>0&&!breaks[breaks.length-1].breakIn;
+  const currentBreakStart=onBreak?breaks[breaks.length-1].breakOut:null;
+
+  // Calculate total completed break minutes from all finished breaks
+  function totalCompletedBreakMins(bks){
+    return bks.filter(b=>b.breakOut&&b.breakIn).reduce((acc,b)=>{
+      return acc+(timeToMins(b.breakIn)-timeToMins(b.breakOut));
+    },0);
+  }
+
+  // Live break duration display
+  const liveBreakMins=onBreak&&currentBreakStart
+    ? Math.floor((now-new Date(TODAY+'T'+currentBreakStart+':00'))/60000)
+    : 0;
+
+  function clockIn(){
+    if(rec?.clockIn){showToast('Already clocked in','error');return}
+    const t=now.toTimeString().slice(0,5);
+    const status=todayShift?getAttendanceStatus(todayShift.startTime,t):'on-time';
+    const earlyLate=todayShift?timeToMins(t)-timeToMins(todayShift.startTime):0;
+    if(rec){
+      setAttendance(p=>p.map(a=>a.id===rec.id?{...a,clockIn:t,status,earlyLateMinutes:earlyLate}:a));
+    }else{
+      setAttendance(p=>[...p,{id:genId('A'),staffId:profile.id,date:TODAY,rotaShiftId:todayShift?.id||null,scheduledStart:todayShift?.startTime||t,scheduledEnd:todayShift?.endTime||'',clockIn:t,clockOut:'',breaks:[],breakMinutes:0,grossHours:0,paidHours:0,status,earlyLateMinutes:earlyLate,notes:''}]);
+    }
+    showToast(`Clocked in at ${t} ✅`);
+  }
+
+  function breakOut(){
+    if(!rec?.clockIn){showToast('Clock in first','error');return}
+    if(rec?.clockOut){showToast('Shift already ended','error');return}
+    if(onBreak){showToast('Already on a break','error');return}
+    const t=now.toTimeString().slice(0,5);
+    const updatedBreaks=[...breaks,{breakOut:t,breakIn:null}];
+    setAttendance(p=>p.map(a=>a.id===rec.id?{...a,breaks:updatedBreaks}:a));
+    showToast(`Break started at ${t} ☕`);
+  }
+
+  function breakIn(){
+    if(!onBreak){showToast('Not currently on a break','error');return}
+    const t=now.toTimeString().slice(0,5);
+    const updatedBreaks=breaks.map((b,i)=>i===breaks.length-1?{...b,breakIn:t}:b);
+    const totalBreakMins=totalCompletedBreakMins(updatedBreaks);
+    setAttendance(p=>p.map(a=>a.id===rec.id?{...a,breaks:updatedBreaks,breakMinutes:totalBreakMins}:a));
+    showToast(`Back from break at ${t} ✅`);
+  }
+
+  function clockOut(){
+    if(!rec?.clockIn){showToast('Clock in first','error');return}
+    if(rec?.clockOut){showToast('Already clocked out','error');return}
+    if(onBreak){showToast('Please end your break first','error');return}
+    const t=now.toTimeString().slice(0,5);
+    const completedBreakMins=totalCompletedBreakMins(breaks);
+    const{grossHours,paidHours,breakMinutes}=calculatePaidHours(rec.clockIn,t,completedBreakMins);
+    setAttendance(p=>p.map(a=>a.id===rec.id?{...a,clockOut:t,grossHours,paidHours,breakMinutes}:a));
+    showToast(`Clocked out · ${paidHours.toFixed(2)}h paid ✅`);
+  }
+
+  const completedBreakMins=totalCompletedBreakMins(breaks);
+
+  return(
+    <div className="page">
+      <h1 className="heading mb-2">Clock In / Out ⏱️</h1>
+
+      {/* Live clock */}
+      <div className="card text-center mb-2" style={{padding:'1.5rem',borderTop: onBreak?'4px solid var(--yellow)':rec?.clockIn&&!rec?.clockOut?'4px solid var(--teal)':'4px solid var(--border)'}}>
+        <div style={{fontSize:44,fontWeight:900,color:onBreak?'var(--orange)':'var(--purple)',fontVariantNumeric:'tabular-nums',letterSpacing:2}}>{now.toTimeString().slice(0,8)}</div>
+        <div className="muted mt-1">{now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</div>
+        {onBreak&&<div style={{marginTop:8,background:'var(--yellow-light)',borderRadius:8,padding:'6px 12px',display:'inline-block',color:'#B8820A',fontWeight:700,fontSize:13}}>☕ On break — {liveBreakMins} min</div>}
+      </div>
+
+      {/* Today's shift */}
+      {todayShift&&(
+        <div className="card-sm mb-2" style={{borderLeft:'4px solid var(--purple)'}}>
+          <div className="subheading mb-1">Today's Shift</div>
+          <div className="row-between">
+            <div><div style={{fontWeight:600}}>{todayShift.startTime} – {todayShift.endTime}</div><div className="muted">{todayShift.department}</div></div>
+            <span className={`dept-badge ${DEPT_COLORS[todayShift.department]||''}`}>{todayShift.shiftType}</span>
+          </div>
+        </div>
+      )}
+      {!todayShift&&<div className="alert alert-info mb-2">No scheduled shift today — you can still clock in as ad-hoc.</div>}
+
+      {/* Attendance summary */}
+      {rec?.clockIn&&(
+        <div className="card-sm mb-2" style={{borderLeft:`4px solid ${onBreak?'var(--yellow)':'var(--teal)'}`}}>
+          <div className="grid-2">
+            <div><span className="muted">Clocked In</span><div style={{fontWeight:800,color:'var(--teal)',fontSize:15}}>{rec.clockIn}</div></div>
+            <div><span className="muted">Clocked Out</span><div style={{fontWeight:800,color:'var(--orange)',fontSize:15}}>{rec.clockOut||'–'}</div></div>
+            <div><span className="muted">Break Taken</span><div style={{fontWeight:700,color:completedBreakMins>0?'var(--orange)':'var(--muted)'}}>{completedBreakMins>0?`${completedBreakMins} min`:'None yet'}</div></div>
+            {rec.clockOut&&<div><span className="muted">Paid Hours</span><div style={{fontWeight:800}}>{rec.paidHours.toFixed(2)}h</div></div>}
+          </div>
+          {rec.earlyLateMinutes>5&&<div style={{color:'var(--orange)',fontSize:12,marginTop:6}}>⚠️ {rec.earlyLateMinutes} min late</div>}
+          {rec.earlyLateMinutes<-5&&<div style={{color:'var(--teal)',fontSize:12,marginTop:6}}>✅ {Math.abs(rec.earlyLateMinutes)} min early</div>}
+          {/* Break history */}
+          {breaks.length>0&&(
+            <div style={{marginTop:10,borderTop:'1px solid var(--border)',paddingTop:10}}>
+              <div style={{fontSize:12,fontWeight:700,color:'var(--muted)',marginBottom:6}}>BREAK HISTORY</div>
+              {breaks.map((b,i)=>(
+                <div key={i} style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:4}}>
+                  <span>Break {i+1}</span>
+                  <span style={{color:'var(--muted)'}}>
+                    {b.breakOut} → {b.breakIn||<span style={{color:'var(--orange)',fontWeight:700}}>on break</span>}
+                    {b.breakIn&&<span style={{color:'var(--purple)',fontWeight:700,marginLeft:6}}>{timeToMins(b.breakIn)-timeToMins(b.breakOut)} min</span>}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Action buttons */}
+      {!rec?.clockIn&&(
+        <button className="clock-btn" style={{background:'linear-gradient(135deg,#2BBFAA,#1A9E8E)',color:'#fff'}} onClick={clockIn}>✅ Clock In</button>
+      )}
+      {rec?.clockIn&&!rec?.clockOut&&!onBreak&&(
+        <button className="clock-btn" style={{background:'linear-gradient(135deg,#FFD166,#E6B800)',color:'#5a4200'}} onClick={breakOut}>☕ Start Break</button>
+      )}
+      {rec?.clockIn&&!rec?.clockOut&&onBreak&&(
+        <button className="clock-btn" style={{background:'linear-gradient(135deg,#7C5CBF,#6847ad)',color:'#fff'}} onClick={breakIn}>✅ End Break</button>
+      )}
+      {rec?.clockIn&&!rec?.clockOut&&!onBreak&&(
+        <button className="clock-btn" style={{background:'linear-gradient(135deg,#FF8C42,#E07835)',color:'#fff'}} onClick={clockOut}>🏁 Clock Out</button>
+      )}
+      {rec?.clockOut&&<div className="alert alert-success">Shift complete for today! See you next time 👋</div>}
+    </div>
+  );
+}
+
+// ── MY LEAVE (staff) ──────────────────────────────────────
+function MyLeave({profile,holidays,setHolidays,absences,setAbsences,showToast}){
+  const [tab,setTab]=useState('holidays');
+  const [showHolForm,setShowHolForm]=useState(false);
+  const [hol,setHol]=useState({startDate:'',endDate:'',reason:''});
+  const [abs,setAbs]=useState({type:'late',comment:''});
+  const myHols=holidays.filter(h=>h.staffId===profile?.id);
+  const myAbs=absences.filter(a=>a.staffId===profile?.id);
+
+  function submitHol(){
+    if(!hol.startDate||!hol.endDate){showToast('Set both dates','error');return}
+    if(hol.endDate<hol.startDate){showToast('End must be after start','error');return}
+    setHolidays(p=>[...p,{id:genId('H'),staffId:profile.id,startDate:hol.startDate,endDate:hol.endDate,reason:hol.reason,status:'pending',reviewedBy:null,reviewedAt:null,createdAt:TODAY}]);
+    setHol({startDate:'',endDate:'',reason:''});setShowHolForm(false);showToast('Holiday request submitted ✅');
+  }
+
+  function submitAbs(){
+    if(!abs.comment.trim()){showToast('Please add a comment','error');return}
+    setAbsences(p=>[...p,{id:genId('AB'),staffId:profile.id,staffName:profile.fullName,date:TODAY,type:abs.type,comment:abs.comment,approvedBy:null,approvedAt:null,createdAt:TODAY}]);
+    setAbs({type:'late',comment:''});showToast('Report submitted ✅');
+  }
+
+  return(
+    <div className="page">
+      <h1 className="heading mb-2">Leave & Reports 🌴</h1>
+      <div className="tab-bar">
+        <button className={`tab${tab==='holidays'?' active':''}`} onClick={()=>setTab('holidays')}>Holiday Requests</button>
+        <button className={`tab${tab==='absence'?' active':''}`} onClick={()=>setTab('absence')}>Report Absence</button>
+      </div>
+
+      {tab==='holidays'&&<>
+        <div className="row-between mb-2">
+          <div className="subheading">My Requests ({myHols.length})</div>
+          <button className="pill pill-pink pill-sm" onClick={()=>setShowHolForm(true)}>+ New Request</button>
+        </div>
+        {myHols.length===0&&<div className="card text-center" style={{color:'var(--muted)',padding:'2rem'}}>No leave requests yet.<br/>Tap + New Request to submit one.</div>}
+        {myHols.map(h=>(
+          <div key={h.id} className="card-sm mb-1">
+            <div className="row-between">
+              <div>
+                <div style={{fontWeight:700}}>{formatDate(h.startDate)} – {formatDate(h.endDate)}</div>
+                {h.reason&&<div className="muted">{h.reason}</div>}
+                <div className="muted">Submitted {formatDate(h.createdAt)}</div>
+              </div>
+              <span className={`badge badge-${h.status}`}>{h.status}</span>
+            </div>
+          </div>
+        ))}
+        {showHolForm&&(
+          <div className="modal-overlay" onClick={()=>setShowHolForm(false)}>
+            <div className="modal" onClick={e=>e.stopPropagation()}>
+              <div className="row-between mb-2"><div className="modal-title">🌴 Holiday Request</div><button className="close-btn" onClick={()=>setShowHolForm(false)}>×</button></div>
+              <div className="grid-2">
+                <div className="field"><label className="label">Start Date</label><input className="input" type="date" value={hol.startDate} onChange={e=>setHol(f=>({...f,startDate:e.target.value}))} /></div>
+                <div className="field"><label className="label">End Date</label><input className="input" type="date" value={hol.endDate} onChange={e=>setHol(f=>({...f,endDate:e.target.value}))} /></div>
+              </div>
+              <div className="field"><label className="label">Reason (optional)</label><input className="input" value={hol.reason} onChange={e=>setHol(f=>({...f,reason:e.target.value}))} placeholder="Family holiday, wedding..." /></div>
+              <button className="pill pill-pink" style={{width:'100%'}} onClick={submitHol}>Submit Request</button>
+            </div>
+          </div>
+        )}
+      </>}
+
+      {tab==='absence'&&<>
+        <div className="card mb-2">
+          <div className="subheading mb-2">Submit a Report</div>
+          <div className="field"><label className="label">Type</label>
+            <div style={{display:'flex',gap:8}}>
+              {['late','sick','absent'].map(t=><button key={t} className={`pill pill-sm ${abs.type===t?'pill-orange':'pill-ghost'}`} onClick={()=>setAbs(f=>({...f,type:t}))} style={{textTransform:'capitalize'}}>{t}</button>)}
+            </div>
+          </div>
+          <div className="field"><label className="label">Comment *</label><textarea className="input" rows={3} value={abs.comment} onChange={e=>setAbs(f=>({...f,comment:e.target.value}))} placeholder="Please describe the situation..." /></div>
+          <div className="muted mb-2">Date: {formatDate(TODAY)}</div>
+          <button className="pill pill-orange" style={{width:'100%'}} onClick={submitAbs}>Submit Report</button>
+        </div>
+        <div className="subheading mb-1">My Reports</div>
+        {myAbs.length===0&&<div className="muted text-center" style={{padding:'1rem'}}>No reports submitted.</div>}
+        {myAbs.map(a=>(
+          <div key={a.id} className="card-sm mb-1">
+            <div className="row-between">
+              <div><div style={{fontWeight:700,textTransform:'capitalize'}}>{a.type}</div><div className="muted">{formatDate(a.date)}</div><div style={{fontSize:13}}>{a.comment}</div></div>
+              <span className={`badge ${a.approvedBy?'badge-approved':'badge-pending'}`}>{a.approvedBy?'Approved':'Pending'}</span>
+            </div>
+          </div>
+        ))}
+      </>}
+    </div>
+  );
+}
+
+// ── ABSENCE REPORTS (supervisor) ──────────────────────────
+function AbsenceReports({absences,staff,onApprove}){
+  const [filter,setFilter]=useState('pending');
+  const filtered=absences.filter(a=>filter==='all'?true:filter==='pending'?!a.approvedBy:!!a.approvedBy);
+  return(
+    <div className="page">
+      <h1 className="heading mb-2">Absence Reports 📋</h1>
+      <div className="tab-bar">
+        <button className={`tab${filter==='pending'?' active':''}`} onClick={()=>setFilter('pending')}>Pending</button>
+        <button className={`tab${filter==='approved'?' active':''}`} onClick={()=>setFilter('approved')}>Approved</button>
+        <button className={`tab${filter==='all'?' active':''}`} onClick={()=>setFilter('all')}>All</button>
+      </div>
+      {filtered.length===0&&<div className="card text-center" style={{color:'var(--muted)',padding:'2rem'}}>No reports to show.</div>}
+      {filtered.map(a=>{
+        const s=staff.find(x=>x.id===a.staffId);
+        return(
+          <div key={a.id} className="card-sm mb-1">
+            <div className="row-between">
+              <div>
+                <div style={{fontWeight:700}}>{s?.fullName||a.staffName}</div>
+                <div className="muted">{a.type.charAt(0).toUpperCase()+a.type.slice(1)} · {formatDate(a.date)}</div>
+                <div style={{fontSize:13,marginTop:4}}>{a.comment}</div>
+              </div>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:6}}>
+                <span className={`badge ${a.type==='late'?'badge-late':'badge-absent'}`}>{a.type}</span>
+                {!a.approvedBy?<button className="pill pill-teal pill-sm" onClick={()=>onApprove(a.id)}>Approve</button>:<span className="badge badge-approved">Approved</span>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── HOLIDAY APPROVALS (manager tab) ───────────────────────
+function HolidayApprovals({holidays,setHolidays,staff,currentUser,showToast}){
+  const [filter,setFilter]=useState('pending');
+  const filtered=holidays.filter(h=>filter==='all'?true:h.status===filter);
+
+  function decide(id,decision){
+    setHolidays(p=>p.map(h=>h.id===id?{...h,status:decision,reviewedBy:currentUser.staffId,reviewedAt:TODAY}:h));
+    showToast(decision==='approved'?'Leave approved ✅':'Leave rejected');
+  }
+
+  return(
+    <div>
+      <div className="tab-bar">
+        <button className={`tab${filter==='pending'?' active':''}`} onClick={()=>setFilter('pending')}>Pending</button>
+        <button className={`tab${filter==='approved'?' active':''}`} onClick={()=>setFilter('approved')}>Approved</button>
+        <button className={`tab${filter==='rejected'?' active':''}`} onClick={()=>setFilter('rejected')}>Rejected</button>
+        <button className={`tab${filter==='all'?' active':''}`} onClick={()=>setFilter('all')}>All</button>
+      </div>
+      {filtered.length===0&&<div className="card text-center" style={{color:'var(--muted)',padding:'2rem'}}>No requests in this category.</div>}
+      {filtered.map(h=>{
+        const s=staff.find(x=>x.id===h.staffId);
+        return(
+          <div key={h.id} className="card-sm mb-1">
+            <div className="row-between">
+              <div>
+                <div style={{fontWeight:700}}>{s?.fullName}</div>
+                <div className="muted">{formatDate(h.startDate)} – {formatDate(h.endDate)}</div>
+                {h.reason&&<div style={{fontSize:13}}>{h.reason}</div>}
+                <div className="muted">Submitted {formatDate(h.createdAt)}</div>
+              </div>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:6}}>
+                <span className={`badge badge-${h.status}`}>{h.status}</span>
+                {h.status==='pending'&&<div className="row gap-1">
+                  <button className="pill pill-success pill-sm" onClick={()=>decide(h.id,'approved')}>✓ Approve</button>
+                  <button className="pill pill-danger pill-sm" onClick={()=>decide(h.id,'rejected')}>✗</button>
+                </div>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── HR MODULE (manager) ───────────────────────────────────
+function HRModule({staff,setStaff,holidays,setHolidays,absences,currentUser,showToast}){
+  const [tab,setTab]=useState('compliance');
+  return(
+    <div className="page">
+      <h1 className="heading mb-2">HR & Records 📋</h1>
+      <div className="tab-bar">
+        <button className={`tab${tab==='compliance'?' active':''}`} onClick={()=>setTab('compliance')}>Compliance</button>
+        <button className={`tab${tab==='leave'?' active':''}`} onClick={()=>setTab('leave')}>Leave</button>
+        <button className={`tab${tab==='absence'?' active':''}`} onClick={()=>setTab('absence')}>Absence</button>
+      </div>
+      {tab==='compliance'&&<CompliancePanel staff={staff} setStaff={setStaff} showToast={showToast} />}
+      {tab==='leave'&&<HolidayApprovals holidays={holidays} setHolidays={setHolidays} staff={staff} currentUser={currentUser} showToast={showToast} />}
+      {tab==='absence'&&<AbsenceReports absences={absences} staff={staff} onApprove={()=>{}} />}
+    </div>
+  );
+}
+
+function CompliancePanel({staff,setStaff,showToast}){
+  const [expanded,setExpanded]=useState(null);
+  function toggleField(staffId,field){
+    setStaff(p=>p.map(s=>s.id===staffId?{...s,complianceFields:{...s.complianceFields,[field]:!s.complianceFields[field]}}:s));
+    showToast('Compliance updated');
+  }
+  const issues=staff.filter(s=>s.employmentStatus!=='ex-staff'&&(!s.complianceFields?.dbs||!s.complianceFields?.rightToWork));
+  return(
+    <div>
+      {issues.length>0&&<div className="alert alert-error mb-2">⚠️ {issues.length} staff member{issues.length>1?'s':''} with outstanding compliance</div>}
+      {staff.filter(s=>s.employmentStatus!=='ex-staff').map(s=>(
+        <div key={s.id} className="card-sm mb-1">
+          <div className="row-between" style={{cursor:'pointer'}} onClick={()=>setExpanded(expanded===s.id?null:s.id)}>
+            <div className="row gap-1">
+              <div className="avatar" style={{width:32,height:32,background:'var(--purple-light)',color:'var(--purple)',fontSize:11}}>{getInitials(s.fullName)}</div>
+              <div>
+                <div style={{fontWeight:700,fontSize:13}}>{s.fullName}</div>
+                <div className="muted">{s.department} · Since {formatDate(s.startDate)}</div>
+              </div>
+            </div>
+            <div className="row gap-1">
+              {!s.complianceFields?.dbs&&<span className="badge" style={{background:'var(--red-light)',color:'var(--red)'}}>DBS ⚠️</span>}
+              {!s.complianceFields?.rightToWork&&<span className="badge" style={{background:'var(--orange-light)',color:'var(--orange)'}}>RTW ⚠️</span>}
+              {s.complianceFields?.dbs&&s.complianceFields?.rightToWork&&<span className="badge badge-active">✓ Clear</span>}
+              <span style={{color:'var(--muted)'}}>{expanded===s.id?'▲':'▼'}</span>
+            </div>
+          </div>
+          {expanded===s.id&&(
+            <div style={{marginTop:12,borderTop:'1px solid var(--border)',paddingTop:12}}>
+              <div className="grid-2 mb-2">
+                <div><span className="muted">ID</span><div style={{fontWeight:600}}>{s.id}</div></div>
+                <div><span className="muted">Pay</span><div style={{fontWeight:600}}>£{s.payRate}/hr</div></div>
+                <div><span className="muted">Role</span><div style={{fontWeight:600,textTransform:'capitalize'}}>{s.role}</div></div>
+                <div><span className="muted">Status</span><span className={`badge badge-${s.employmentStatus==='active'?'active':'pending'}`}>{s.employmentStatus}</span></div>
+              </div>
+              <div className="subheading mb-1" style={{fontSize:13}}>Compliance Checks</div>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                <button className={`pill pill-sm ${s.complianceFields?.dbs?'pill-success':'pill-ghost'}`} onClick={()=>toggleField(s.id,'dbs')}>
+                  {s.complianceFields?.dbs?'✅':'⬜'} DBS Check
+                </button>
+                <button className={`pill pill-sm ${s.complianceFields?.rightToWork?'pill-success':'pill-ghost'}`} onClick={()=>toggleField(s.id,'rightToWork')}>
+                  {s.complianceFields?.rightToWork?'✅':'⬜'} Right to Work
+                </button>
+              </div>
+              {s.notes&&<div className="muted mt-2" style={{fontSize:12}}>Notes: {s.notes}</div>}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── PERSISTENCE HELPERS ───────────────────────────────────
+const LS_KEY='kc_tracker_v1';
+function loadStore(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(!raw)return null;
+    return JSON.parse(raw);
+  }catch{return null;}
+}
+function saveStore(data){
+  try{localStorage.setItem(LS_KEY,JSON.stringify(data));}catch(e){console.warn('localStorage save failed',e);}
+}
+
+// ── APP ROOT ──────────────────────────────────────────────
+function App(){
+  // Initialise each slice from localStorage if it exists, else fall back to seed data
+  const saved=loadStore();
+  const [currentUser,setCurrentUser]=useState(null);
+  const [users,setUsers]=useState(()=>saved?.users||SEED_USERS);
+  const [staff,setStaff]=useState(()=>saved?.staff||SEED_STAFF);
+  const [rota,setRota]=useState(()=>saved?.rota||SEED_ROTA);
+  const [attendance,setAttendance]=useState(()=>saved?.attendance||SEED_ATTENDANCE);
+  const [holidays,setHolidays]=useState(()=>saved?.holidays||SEED_HOLIDAYS);
+  const [absences,setAbsences]=useState(()=>saved?.absences||SEED_ABSENCE);
+  const [templates,setTemplates]=useState(()=>saved?.templates||SEED_TEMPLATES);
+  const [navTab,setNavTab]=useState('dashboard');
+  const [toast,setToast]=useState(null);
+
+  // Persist every time any data slice changes
+  useEffect(()=>{
+    saveStore({users,staff,rota,attendance,holidays,absences,templates});
+  },[users,staff,rota,attendance,holidays,absences,templates]);
+
+  const showToast=useCallback((msg,type='success')=>{
+    setToast({msg,type});setTimeout(()=>setToast(null),3000);
+  },[]);
+
+  if(!currentUser){
+    return <LoginScreen users={users} staff={staff} onLogin={u=>{setCurrentUser(u);setNavTab('dashboard')}} />;
+  }
+
+  const myProfile=staff.find(s=>s.id===currentUser.staffId);
+  const role=currentUser.role;
+
+  const navMap={
+    manager:[{id:'dashboard',icon:'📊',label:'Home'},{id:'rota',icon:'📅',label:'Rota'},{id:'staff',icon:'👥',label:'Staff'},{id:'clockin',icon:'⏱️',label:'Clock'},{id:'attendance',icon:'📋',label:'Team'},{id:'hr',icon:'🗂️',label:'HR'}],
+    supervisor:[{id:'dashboard',icon:'📊',label:'Home'},{id:'rota',icon:'📅',label:'Rota'},{id:'clockin',icon:'⏱️',label:'Clock'},{id:'attendance',icon:'📋',label:'Team'},{id:'reports',icon:'📝',label:'Reports'}],
+    staff:[{id:'dashboard',icon:'🏠',label:'Home'},{id:'myrota',icon:'📅',label:'My Rota'},{id:'clockin',icon:'⏱️',label:'Clock'},{id:'leave',icon:'🌴',label:'Leave'}],
+  };
+  const navItems=navMap[role]||navMap.staff;
+
+  function approveAbsence(id){
+    setAbsences(p=>p.map(a=>a.id===id?{...a,approvedBy:currentUser.id,approvedAt:TODAY}:a));
+    showToast('Report approved ✅');
+  }
+
+  function handleReset(){
+    setUsers(SEED_USERS);
+    setStaff(SEED_STAFF);
+    setRota(SEED_ROTA);
+    setAttendance(SEED_ATTENDANCE);
+    setHolidays(SEED_HOLIDAYS);
+    setAbsences(SEED_ABSENCE);
+    setTemplates(SEED_TEMPLATES);
+    setCurrentUser(null);
+    try{localStorage.removeItem(LS_KEY);}catch{}
+    showToast('Data reset to demo ✅');
+  }
+
+  return(
+    <div style={{minHeight:'100vh',background:'var(--bg)'}}>
+      {toast&&<Toast msg={toast.msg} type={toast.type} />}
+      <TopBar user={currentUser} profile={myProfile} onLogout={()=>setCurrentUser(null)} onReset={role==='manager'?handleReset:null} />
+      <main>
+        {navTab==='dashboard'&&role==='manager'&&<ManagerDashboard staff={staff} rota={rota} attendance={attendance} holidays={holidays} absences={absences} />}
+        {navTab==='dashboard'&&role==='supervisor'&&<SupervisorDashboard staff={staff} rota={rota} attendance={attendance} absences={absences} onApproveAbsence={approveAbsence} />}
+        {navTab==='dashboard'&&role==='staff'&&<StaffDashboard profile={myProfile} rota={rota} attendance={attendance} holidays={holidays} />}
+        {navTab==='rota'&&<RotaBuilder staff={staff} rota={rota} setRota={setRota} templates={templates} setTemplates={setTemplates} currentUser={currentUser} showToast={showToast} canEdit={role==='manager'} />}
+        {navTab==='myrota'&&<MyRota profile={myProfile} rota={rota} />}
+        {navTab==='staff'&&role==='manager'&&<StaffManagement staff={staff} setStaff={setStaff} users={users} setUsers={setUsers} showToast={showToast} />}
+        {navTab==='attendance'&&<AttendanceManager staff={staff} attendance={attendance} setAttendance={setAttendance} rota={rota} showToast={showToast} role={role} />}
+        {navTab==='clockin'&&<ClockInOut profile={myProfile} rota={rota} attendance={attendance} setAttendance={setAttendance} showToast={showToast} />}
+        {navTab==='leave'&&<MyLeave profile={myProfile} holidays={holidays} setHolidays={setHolidays} absences={absences} setAbsences={setAbsences} showToast={showToast} />}
+        {navTab==='hr'&&role==='manager'&&<HRModule staff={staff} setStaff={setStaff} holidays={holidays} setHolidays={setHolidays} absences={absences} currentUser={currentUser} showToast={showToast} />}
+        {navTab==='reports'&&role==='supervisor'&&<AbsenceReports absences={absences} staff={staff} onApprove={approveAbsence} />}
+      </main>
+      <nav className="nav">
+        {navItems.map(item=>(
+          <button key={item.id} className={`nav-item${navTab===item.id?' active':''}`} onClick={()=>setNavTab(item.id)}>
+            <span className="nav-icon">{item.icon}</span>
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
