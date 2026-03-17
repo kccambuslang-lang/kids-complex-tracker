@@ -265,7 +265,7 @@ function LoginScreen({users,staff,onLogin}){
     if(v&&i<3)refs[i+1].current&&refs[i+1].current.focus();
     if(p.every(d=>d!=='')){
       const entered=p.join('');
-      if(entered===selected.pin){onLogin(selected)}
+      if(entered===String(selected.pin)){onLogin(selected)}
       else{setErr('Incorrect PIN – try again');setPin(['','','','']);setTimeout(()=>r0.current&&r0.current.focus(),100)}
     }
   }
