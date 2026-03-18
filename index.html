@@ -265,14 +265,14 @@ function LoginScreen({users,staff,onLogin}){
     if(v&&i<3)refs[i+1].current&&refs[i+1].current.focus();
     if(p.every(d=>d!=='')){
       const entered=p.join('');
-      if(entered===String(selected.pin)){onLogin(selected)}
+      if(String(entered).trim()===String(selected.pin).trim()){onLogin(selected)}
       else{setErr('Incorrect PIN – try again');setPin(['','','','']);setTimeout(()=>r0.current&&r0.current.focus(),100)}
     }
   }
   function handleKeyDown(i,e){if(e.key==='Backspace'&&!pin[i]&&i>0)refs[i-1].current&&refs[i-1].current.focus()}
 
   const activeStaff=staff.filter(s=>s.employmentStatus==='active'||s.employmentStatus==='onboarding');
-  const selProfile=selected?staff.find(s=>s.id===selected.id):null;
+  const selProfile=selected?staff.find(s=>s.id===selected.staffId):null;
 
   return(
     <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px',background:'var(--bg)'}}>
@@ -287,11 +287,18 @@ function LoginScreen({users,staff,onLogin}){
           <p style={{fontWeight:700,fontSize:15,marginBottom:12,textAlign:'center',color:'var(--muted)'}}>Select your name to sign in</p>
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {activeStaff.map(s=>{
-              const u=s;
+              const u = {
+  id: `user-${s.id}`,
+  staffId: s.id,
+  fullName: s.fullName || s.name || "",
+  name: s.fullName || s.name || "",
+  role: s.role || "staff",
+  pin: String(s.pin || "1234")
+};
               const avatarBg=s.role==='manager'?'var(--purple-light)':s.role==='supervisor'?'var(--teal-light)':'var(--pink-light)';
               const avatarColor=s.role==='manager'?'var(--purple)':s.role==='supervisor'?'var(--teal)':'var(--pink)';
               return(
-                <button key={s.id} className="login-card" onClick={()=>handleSelect(s)}>
+                <button key={s.id} className="login-card" onClick={()=>handleSelect(u)}>
                   <div className="avatar" style={{background:avatarBg,color:avatarColor}}>{getInitials(s.fullName)}</div>
                   <div style={{flex:1}}>
                     <div style={{fontWeight:700,fontSize:14,color:'var(--text)'}}>{s.fullName}</div>
