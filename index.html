@@ -560,34 +560,44 @@ function RotaBuilder({staff,rota,setRota,templates,setTemplates,currentUser,show
 
   function getShift(staffId,day){return shifts.find(s=>s.staffId===staffId&&s.day===day)}
 
-  function saveShift(staffId,day,startTime,endTime,department,shiftType){
+  async function saveShift(staffId,day,startTime,endTime,department,shiftType){
     if(!canEdit)return;
     const newSh={id:genId('SH'),staffId,day,startTime,endTime,department,shiftType};
+    let updatedWeek;
     if(!weekRota){
-      setRota(p=>[...p,{id:genId('R'),weekStartDate:viewWeek,shifts:[newSh]}]);
+      updatedWeek={id:genId('R'),weekStartDate:viewWeek,shifts:[newSh]};
+      setRota(p=>[...p,updatedWeek]);
     }else{
-      setRota(p=>p.map(r=>r.weekStartDate===viewWeek?{...r,shifts:[...r.shifts.filter(s=>!(s.staffId===staffId&&s.day===day)),newSh]}:r));
+      updatedWeek={...weekRota,shifts:[...weekRota.shifts.filter(s=>!(s.staffId===staffId&&s.day===day)),newSh]};
+      setRota(p=>p.map(r=>r.weekStartDate===viewWeek?updatedWeek:r));
     }
+    try{ await window.FS.saveDoc('rota', updatedWeek); }catch(e){console.warn('rota save',e)}
     setEditCell(null);showToast('Shift saved ✅');
   }
 
-  function removeShift(staffId,day){
+  async function removeShift(staffId,day){
     if(!canEdit)return;
-    setRota(p=>p.map(r=>r.weekStartDate===viewWeek?{...r,shifts:r.shifts.filter(s=>!(s.staffId===staffId&&s.day===day))}:r));
+    const updatedWeek={...weekRota,shifts:weekRota.shifts.filter(s=>!(s.staffId===staffId&&s.day===day))};
+    setRota(p=>p.map(r=>r.weekStartDate===viewWeek?updatedWeek:r));
+    try{ await window.FS.saveDoc('rota', updatedWeek); }catch(e){console.warn('rota save',e)}
     setEditCell(null);showToast('Shift removed');
   }
 
-  function saveTpl(){
+  async function saveTpl(){
     if(!tplName.trim()){showToast('Enter a template name','error');return}
-    setTemplates(p=>[...p,{id:genId('T'),name:tplName.trim(),createdAt:TODAY,createdBy:currentUser.staffId,shifts:shifts.map(({id,...r})=>r)}]);
+    const newTpl={id:genId('T'),name:tplName.trim(),createdAt:TODAY,createdBy:currentUser.staffId,shifts:shifts.map(({id,...r})=>r)};
+    setTemplates(p=>[...p,newTpl]);
+    try{ await window.FS.saveDoc('templates', newTpl); }catch(e){console.warn('template save',e)}
     setShowTplModal(false);setTplName('');showToast('Template saved ✅');
   }
 
-  function applyTpl(tpl,targetWeek){
+  async function applyTpl(tpl,targetWeek){
     const newShifts=tpl.shifts.map(s=>({...s,id:genId('SH')}));
     const ex=rota.find(r=>r.weekStartDate===targetWeek);
-    if(ex){setRota(p=>p.map(r=>r.weekStartDate===targetWeek?{...r,shifts:newShifts}:r))}
-    else{setRota(p=>[...p,{id:genId('R'),weekStartDate:targetWeek,shifts:newShifts}])}
+    let updatedWeek;
+    if(ex){updatedWeek={...ex,shifts:newShifts};setRota(p=>p.map(r=>r.weekStartDate===targetWeek?updatedWeek:r))}
+    else{updatedWeek={id:genId('R'),weekStartDate:targetWeek,shifts:newShifts};setRota(p=>[...p,updatedWeek])}
+    try{ await window.FS.saveDoc('rota', updatedWeek); }catch(e){console.warn('rota save',e)}
     setShowCopyModal(false);showToast('Template applied ✅');
   }
 
@@ -801,14 +811,19 @@ function StaffManagement({staff,setStaff,users,setUsers,showToast}){
 
   const filtered=staff.filter(s=>filter==='all'?true:s.employmentStatus===filter);
 
-  function handleSave(data){
+  async function handleSave(data){
     if(editTarget){
-      // Update staff profile
-      setStaff(p=>p.map(s=>s.id===editTarget.id?{...s,...data}:s));
-      // Update PIN + role in users if changed
+      const updated={...editTarget,...data};
+      setStaff(p=>p.map(s=>s.id===editTarget.id?updated:s));
+      try{ await window.FS.saveDoc('staff', updated); }catch(e){console.warn(e)}
       if(data.pin){
         if(!/^\d{4}$/.test(data.pin)){showToast('PIN must be exactly 4 digits','error');return}
-        setUsers(p=>p.map(u=>u.staffId===editTarget.id?{...u,pin:data.pin,role:data.role}:u));
+        const updUser=users.find(u=>u.staffId===editTarget.id);
+        if(updUser){
+          const nu={...updUser,pin:data.pin,role:data.role};
+          setUsers(p=>p.map(u=>u.staffId===editTarget.id?nu:u));
+          try{ await window.FS.saveDoc('users', nu); }catch(e){console.warn(e)}
+        }
       }
       showToast('Staff record updated ✅');
     }else{
@@ -816,15 +831,23 @@ function StaffManagement({staff,setStaff,users,setUsers,showToast}){
       if(staff.find(s=>s.id===data.id)){showToast('Staff ID already exists','error');return}
       if(isNaN(data.payRate)||data.payRate<0){showToast('Invalid pay rate','error');return}
       if(!/^\d{4}$/.test(data.pin)){showToast('PIN must be exactly 4 digits','error');return}
-      setStaff(p=>[...p,{...data,complianceFields:{dbs:false,rightToWork:false},createdAt:TODAY}]);
-      setUsers(p=>[...p,{id:genId('U'),staffId:data.id,username:data.fullName.split(' ')[0].toLowerCase(),pin:data.pin,role:data.role}]);
+      const ns={...data,complianceFields:{dbs:false,rightToWork:false},createdAt:TODAY};
+      const nu={id:genId('U'),staffId:data.id,username:data.fullName.split(' ')[0].toLowerCase(),pin:data.pin,role:data.role};
+      setStaff(p=>[...p,ns]);
+      setUsers(p=>[...p,nu]);
+      try{
+        await window.FS.saveDoc('staff', ns);
+        await window.FS.saveDoc('users', nu);
+      }catch(e){console.warn(e)}
       showToast(`Staff member added ✅ PIN set to ${data.pin}`);
     }
     setShowForm(false);setEditTarget(null);
   }
 
-  function archive(s){
-    setStaff(p=>p.map(x=>x.id===s.id?{...x,employmentStatus:'ex-staff',endDate:TODAY}:x));
+  async function archive(s){
+    const ex={...s,employmentStatus:'ex-staff',endDate:TODAY};
+    setStaff(p=>p.map(x=>x.id===s.id?ex:x));
+    try{ await window.FS.saveDoc('staff', ex); }catch(e){console.warn(e)}
     showToast(`${s.fullName} archived`);
   }
 
@@ -953,20 +976,24 @@ function AttendanceManager({staff,attendance,setAttendance,rota,showToast,role})
   const dayShifts=weekRota?weekRota.shifts.filter(s=>s.day===dayIdx):[];
   const dayRecs=attendance.filter(a=>a.date===selDate);
 
-  function handleSave(data){
+  async function handleSave(data){
     const completedBreakMins=(data.breaks||[]).filter(b=>b.breakOut&&b.breakIn).reduce((acc,b)=>acc+(timeToMins(b.breakIn)-timeToMins(b.breakOut)),0);
     const {grossHours,paidHours,breakMinutes}=calculatePaidHours(data.clockIn,data.clockOut,completedBreakMins);
     const status=getAttendanceStatus(data.scheduledStart,data.clockIn);
     const earlyLate=data.clockIn?timeToMins(data.clockIn)-timeToMins(data.scheduledStart):0;
+    let updated;
     if(editRec){
-      setAttendance(p=>p.map(a=>a.id===editRec.id?{...a,...data,grossHours,paidHours,breakMinutes,status,earlyLateMinutes:earlyLate}:a));
+      updated={...editRec,...data,grossHours,paidHours,breakMinutes,status,earlyLateMinutes:earlyLate};
+      setAttendance(p=>p.map(a=>a.id===editRec.id?updated:a));
       showToast('Record updated');
     }else{
       if(!data.staffId){showToast('Select a staff member','error');return}
       if(attendance.find(a=>a.staffId===data.staffId&&a.date===data.date)){showToast('Record already exists','error');return}
-      setAttendance(p=>[...p,{id:genId('A'),...data,grossHours,paidHours,breakMinutes,status,earlyLateMinutes:earlyLate,notes:''}]);
+      updated={id:genId('A'),...data,grossHours,paidHours,breakMinutes,status,earlyLateMinutes:earlyLate,notes:''};
+      setAttendance(p=>[...p,updated]);
       showToast('Record added');
     }
+    try{ await window.FS.saveDoc('attendance', updated); }catch(e){console.warn(e)}
     setShowModal(false);setEditRec(null);
   }
 
@@ -1100,46 +1127,60 @@ function ClockInOut({profile,rota,attendance,setAttendance,showToast}){
     ? Math.floor((now-new Date(TODAY+'T'+currentBreakStart+':00'))/60000)
     : 0;
 
-  function clockIn(){
+  async function saveAtt(updated){
+    try{ await window.FS.saveDoc('attendance', updated); }catch(e){console.warn('att save',e)}
+  }
+
+  async function clockIn(){
     if(rec?.clockIn){showToast('Already clocked in','error');return}
     const t=now.toTimeString().slice(0,5);
     const status=todayShift?getAttendanceStatus(todayShift.startTime,t):'on-time';
     const earlyLate=todayShift?timeToMins(t)-timeToMins(todayShift.startTime):0;
+    let updated;
     if(rec){
-      setAttendance(p=>p.map(a=>a.id===rec.id?{...a,clockIn:t,status,earlyLateMinutes:earlyLate}:a));
+      updated={...rec,clockIn:t,status,earlyLateMinutes:earlyLate};
+      setAttendance(p=>p.map(a=>a.id===rec.id?updated:a));
     }else{
-      setAttendance(p=>[...p,{id:genId('A'),staffId:profile.id,date:TODAY,rotaShiftId:todayShift?.id||null,scheduledStart:todayShift?.startTime||t,scheduledEnd:todayShift?.endTime||'',clockIn:t,clockOut:'',breaks:[],breakMinutes:0,grossHours:0,paidHours:0,status,earlyLateMinutes:earlyLate,notes:''}]);
+      updated={id:genId('A'),staffId:profile.id,date:TODAY,rotaShiftId:todayShift?.id||null,scheduledStart:todayShift?.startTime||t,scheduledEnd:todayShift?.endTime||'',clockIn:t,clockOut:'',breaks:[],breakMinutes:0,grossHours:0,paidHours:0,status,earlyLateMinutes:earlyLate,notes:''};
+      setAttendance(p=>[...p,updated]);
     }
+    await saveAtt(updated);
     showToast(`Clocked in at ${t} ✅`);
   }
 
-  function breakOut(){
+  async function breakOut(){
     if(!rec?.clockIn){showToast('Clock in first','error');return}
     if(rec?.clockOut){showToast('Shift already ended','error');return}
     if(onBreak){showToast('Already on a break','error');return}
     const t=now.toTimeString().slice(0,5);
     const updatedBreaks=[...breaks,{breakOut:t,breakIn:null}];
-    setAttendance(p=>p.map(a=>a.id===rec.id?{...a,breaks:updatedBreaks}:a));
+    const updated={...rec,breaks:updatedBreaks};
+    setAttendance(p=>p.map(a=>a.id===rec.id?updated:a));
+    await saveAtt(updated);
     showToast(`Break started at ${t} ☕`);
   }
 
-  function breakIn(){
+  async function breakIn(){
     if(!onBreak){showToast('Not currently on a break','error');return}
     const t=now.toTimeString().slice(0,5);
     const updatedBreaks=breaks.map((b,i)=>i===breaks.length-1?{...b,breakIn:t}:b);
     const totalBreakMins=totalCompletedBreakMins(updatedBreaks);
-    setAttendance(p=>p.map(a=>a.id===rec.id?{...a,breaks:updatedBreaks,breakMinutes:totalBreakMins}:a));
+    const updated={...rec,breaks:updatedBreaks,breakMinutes:totalBreakMins};
+    setAttendance(p=>p.map(a=>a.id===rec.id?updated:a));
+    await saveAtt(updated);
     showToast(`Back from break at ${t} ✅`);
   }
 
-  function clockOut(){
+  async function clockOut(){
     if(!rec?.clockIn){showToast('Clock in first','error');return}
     if(rec?.clockOut){showToast('Already clocked out','error');return}
     if(onBreak){showToast('Please end your break first','error');return}
     const t=now.toTimeString().slice(0,5);
     const completedBreakMins=totalCompletedBreakMins(breaks);
     const{grossHours,paidHours,breakMinutes}=calculatePaidHours(rec.clockIn,t,completedBreakMins);
-    setAttendance(p=>p.map(a=>a.id===rec.id?{...a,clockOut:t,grossHours,paidHours,breakMinutes}:a));
+    const updated={...rec,clockOut:t,grossHours,paidHours,breakMinutes};
+    setAttendance(p=>p.map(a=>a.id===rec.id?updated:a));
+    await saveAtt(updated);
     showToast(`Clocked out · ${paidHours.toFixed(2)}h paid ✅`);
   }
 
@@ -1224,16 +1265,20 @@ function MyLeave({profile,holidays,setHolidays,absences,setAbsences,showToast}){
   const myHols=holidays.filter(h=>h.staffId===profile?.id);
   const myAbs=absences.filter(a=>a.staffId===profile?.id);
 
-  function submitHol(){
+  async function submitHol(){
     if(!hol.startDate||!hol.endDate){showToast('Set both dates','error');return}
     if(hol.endDate<hol.startDate){showToast('End must be after start','error');return}
-    setHolidays(p=>[...p,{id:genId('H'),staffId:profile.id,startDate:hol.startDate,endDate:hol.endDate,reason:hol.reason,status:'pending',reviewedBy:null,reviewedAt:null,createdAt:TODAY}]);
+    const nh={id:genId('H'),staffId:profile.id,startDate:hol.startDate,endDate:hol.endDate,reason:hol.reason,status:'pending',reviewedBy:null,reviewedAt:null,createdAt:TODAY};
+    setHolidays(p=>[...p,nh]);
+    try{ await window.FS.saveDoc('holidays', nh); }catch(e){console.warn(e);}
     setHol({startDate:'',endDate:'',reason:''});setShowHolForm(false);showToast('Holiday request submitted ✅');
   }
 
-  function submitAbs(){
+  async function submitAbs(){
     if(!abs.comment.trim()){showToast('Please add a comment','error');return}
-    setAbsences(p=>[...p,{id:genId('AB'),staffId:profile.id,staffName:profile.fullName,date:TODAY,type:abs.type,comment:abs.comment,approvedBy:null,approvedAt:null,createdAt:TODAY}]);
+    const na={id:genId('AB'),staffId:profile.id,staffName:profile.fullName,date:TODAY,type:abs.type,comment:abs.comment,approvedBy:null,approvedAt:null,createdAt:TODAY};
+    setAbsences(p=>[...p,na]);
+    try{ await window.FS.saveDoc('absences', na); }catch(e){console.warn(e);}
     setAbs({type:'late',comment:''});showToast('Report submitted ✅');
   }
 
@@ -1345,8 +1390,12 @@ function HolidayApprovals({holidays,setHolidays,staff,currentUser,showToast}){
   const [filter,setFilter]=useState('pending');
   const filtered=holidays.filter(h=>filter==='all'?true:h.status===filter);
 
-  function decide(id,decision){
-    setHolidays(p=>p.map(h=>h.id===id?{...h,status:decision,reviewedBy:currentUser.staffId,reviewedAt:TODAY}:h));
+  async function decide(id,decision){
+    const updated=holidays.find(h=>h.id===id);
+    if(!updated)return;
+    const nu={...updated,status:decision,reviewedBy:currentUser.staffId,reviewedAt:TODAY};
+    setHolidays(p=>p.map(h=>h.id===id?nu:h));
+    try{ await window.FS.saveDoc('holidays', nu); }catch(e){console.warn(e)}
     showToast(decision==='approved'?'Leave approved ✅':'Leave rejected');
   }
 
@@ -1405,8 +1454,12 @@ function HRModule({staff,setStaff,holidays,setHolidays,absences,currentUser,show
 
 function CompliancePanel({staff,setStaff,showToast}){
   const [expanded,setExpanded]=useState(null);
-  function toggleField(staffId,field){
-    setStaff(p=>p.map(s=>s.id===staffId?{...s,complianceFields:{...s.complianceFields,[field]:!s.complianceFields[field]}}:s));
+  async function toggleField(staffId,field){
+    const member=staff.find(s=>s.id===staffId);
+    if(!member)return;
+    const updated={...member,complianceFields:{...member.complianceFields,[field]:!member.complianceFields?.[field]}};
+    setStaff(p=>p.map(s=>s.id===staffId?updated:s));
+    try{ await window.FS.saveDoc('staff', updated); }catch(e){console.warn(e)}
     showToast('Compliance updated');
   }
   const issues=staff.filter(s=>s.employmentStatus!=='ex-staff'&&(!s.complianceFields?.dbs||!s.complianceFields?.rightToWork));
@@ -1455,96 +1508,74 @@ function CompliancePanel({staff,setStaff,showToast}){
     </div>
   );
 }
-// ── PERSISTENCE HELPERS ───────────────────────────────────
-const LS_KEY='kc_tracker_v1';
-function loadStore(){
-  try{
-    const raw=localStorage.getItem(LS_KEY);
-    if(!raw)return null;
-    return JSON.parse(raw);
-  }catch{return null;}
-}
-function saveStore(data){
-  try{localStorage.setItem(LS_KEY,JSON.stringify(data));}catch(e){console.warn('localStorage save failed',e);}
-}
-
 // ── APP ROOT ──────────────────────────────────────────────
-
- async function loadStaffFromFirebase() {
-  try {
-    if (!window.db || !window.fb) return null;
-
-    const { collection, getDocs } = window.fb;
-    const snap = await getDocs(collection(window.db, "staff"));
-    const staff = [];
-
-    snap.forEach((docSnap) => {
-      const data = docSnap.data();
-      staff.push({
-        id: docSnap.id,
-        ...data
-      });
-    });
-
-    return staff;
-  } catch (e) {
-    console.warn("Firebase load failed", e);
-    return null;
-  }
-}
-
-async function saveStaffToFirebase(staff) {
-  try {
-    if (!window.db || !window.fb) return;
-
-    const { doc, setDoc } = window.fb;
-
-    for (const member of staff) {
-      const id = member.id || crypto.randomUUID();
-      await setDoc(doc(window.db, "staff", id), {
-        ...member,
-        id
-      });
-    }
-  } catch (e) {
-    console.warn("Firebase save failed", e);
-  }
-}
- function App(){
-  // Initialise each slice from localStorage if it exists, else fall back to seed data
-  const saved=loadStore();
+function App(){
+  const [ready,setReady]=useState(false);
   const [currentUser,setCurrentUser]=useState(null);
-  const [users,setUsers]=useState(()=>saved?.users||SEED_USERS);
-  const [staff,setStaff]=useState([]);
-  const [rota,setRota]=useState(()=>saved?.rota||SEED_ROTA);
-  const [attendance,setAttendance]=useState(()=>saved?.attendance||SEED_ATTENDANCE);
-  const [holidays,setHolidays]=useState(()=>saved?.holidays||SEED_HOLIDAYS);
-  const [absences,setAbsences]=useState(()=>saved?.absences||SEED_ABSENCE);
-  const [templates,setTemplates]=useState(()=>saved?.templates||SEED_TEMPLATES);
+  const [users,setUsers]=useState(SEED_USERS);
+  const [staff,setStaff]=useState(SEED_STAFF);
+  const [rota,setRota]=useState(SEED_ROTA);
+  const [attendance,setAttendance]=useState(SEED_ATTENDANCE);
+  const [holidays,setHolidays]=useState(SEED_HOLIDAYS);
+  const [absences,setAbsences]=useState(SEED_ABSENCE);
+  const [templates,setTemplates]=useState(SEED_TEMPLATES);
   const [navTab,setNavTab]=useState('dashboard');
   const [toast,setToast]=useState(null);
-React.useEffect(() => {
-  async function syncStaffFromFirebase() {
-    const firebaseStaff = await loadStaffFromFirebase();
-    if (firebaseStaff && firebaseStaff.length > 0) {
-      setStaff(firebaseStaff);
-    }
-  }
-  syncStaffFromFirebase();
-}, []);
-  React.useEffect(() => {
-  if (staff && staff.length) {
-    saveStaffToFirebase(staff);
-  }
-}, [staff]);
-  // Persist every time any data slice changes
+
+  // ── Connect to Firestore and load all data ──────────────
   useEffect(()=>{
-    saveStore({users,staff,rota,attendance,holidays,absences,templates});
-  },[users,staff,rota,attendance,holidays,absences,templates]);
+    async function init(){
+      try {
+        const FS = window.FS;
+        // Seed each collection if empty, then subscribe to real-time updates
+        const [fbStaff,fbUsers,fbRota,fbAtt,fbHols,fbAbs,fbTpl] = await Promise.all([
+          FS.loadCol('staff'), FS.loadCol('users'), FS.loadCol('rota'),
+          FS.loadCol('attendance'), FS.loadCol('holidays'),
+          FS.loadCol('absences'), FS.loadCol('templates'),
+        ]);
+
+        if(fbStaff.length===0)    await FS.saveCol('staff',    SEED_STAFF);
+        if(fbUsers.length===0)    await FS.saveCol('users',    SEED_USERS);
+        if(fbRota.length===0)     await FS.saveCol('rota',     SEED_ROTA);
+        if(fbAtt.length===0)      await FS.saveCol('attendance',SEED_ATTENDANCE);
+        if(fbHols.length===0)     await FS.saveCol('holidays', SEED_HOLIDAYS);
+        if(fbAbs.length===0)      await FS.saveCol('absences', SEED_ABSENCE);
+        if(fbTpl.length===0)      await FS.saveCol('templates',SEED_TEMPLATES);
+
+        // Real-time listeners — any change in Firestore updates React state instantly
+        FS.listenCol('staff',      d=>setStaff(d));
+        FS.listenCol('users',      d=>setUsers(d));
+        FS.listenCol('rota',       d=>setRota(d));
+        FS.listenCol('attendance', d=>setAttendance(d));
+        FS.listenCol('holidays',   d=>setHolidays(d));
+        FS.listenCol('absences',   d=>setAbsences(d));
+        FS.listenCol('templates',  d=>setTemplates(d));
+        setReady(true);
+      } catch(e) {
+        console.error('Firebase init error:', e);
+        setReady(true); // show app anyway
+      }
+    }
+    if(window.FS) init();
+    else window.addEventListener('firebaseReady', init, {once:true});
+  },[]);
 
   const showToast=useCallback((msg,type='success')=>{
     setToast({msg,type});setTimeout(()=>setToast(null),3000);
   },[]);
+
+  // ── Loading screen while Firebase connects ──────────────
+  if(!ready){
+    return(
+      <div style={{minHeight:'100vh',background:'var(--bg)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16}}>
+        <div style={{fontSize:48}}>⏱️</div>
+        <div style={{fontWeight:800,fontSize:20,color:'var(--purple)'}}>Kids Complex</div>
+        <div style={{color:'var(--muted)',fontSize:14}}>Connecting to database…</div>
+        <div style={{width:36,height:36,border:'3px solid var(--border)',borderTopColor:'var(--purple)',borderRadius:'50%',animation:'spin 0.8s linear infinite'}}></div>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      </div>
+    );
+  }
 
   if(!currentUser){
     return <LoginScreen users={users} staff={staff} onLogin={u=>{setCurrentUser(u);setNavTab('dashboard')}} />;
@@ -1560,21 +1591,27 @@ React.useEffect(() => {
   };
   const navItems=navMap[role]||navMap.staff;
 
-  function approveAbsence(id){
-    setAbsences(p=>p.map(a=>a.id===id?{...a,approvedBy:currentUser.id,approvedAt:TODAY}:a));
+  async function approveAbsence(id){
+    const found=absences.find(a=>a.id===id);
+    if(!found)return;
+    const updated={...found,approvedBy:currentUser.id,approvedAt:TODAY};
+    setAbsences(p=>p.map(a=>a.id===id?updated:a));
+    try{ await window.FS.saveDoc('absences', updated); }catch(e){console.warn(e)}
     showToast('Report approved ✅');
   }
 
-  function handleReset(){
-    setUsers(SEED_USERS);
-    setStaff(SEED_STAFF);
-    setRota(SEED_ROTA);
-    setAttendance(SEED_ATTENDANCE);
-    setHolidays(SEED_HOLIDAYS);
-    setAbsences(SEED_ABSENCE);
-    setTemplates(SEED_TEMPLATES);
+  async function handleReset(){
+    if(!window.confirm('Reset ALL data to demo? This cannot be undone.'))return;
+    try{
+      await window.FS.saveCol('staff',    SEED_STAFF);
+      await window.FS.saveCol('users',    SEED_USERS);
+      await window.FS.saveCol('rota',     SEED_ROTA);
+      await window.FS.saveCol('attendance',SEED_ATTENDANCE);
+      await window.FS.saveCol('holidays', SEED_HOLIDAYS);
+      await window.FS.saveCol('absences', SEED_ABSENCE);
+      await window.FS.saveCol('templates',SEED_TEMPLATES);
+    }catch(e){console.warn(e)}
     setCurrentUser(null);
-    try{localStorage.removeItem(LS_KEY);}catch{}
     showToast('Data reset to demo ✅');
   }
 
@@ -1610,45 +1647,56 @@ React.useEffect(() => {
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 <script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  doc,
-  updateDoc,
-  deleteDoc,
-  setDoc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+  getFirestore, collection, getDocs, doc, setDoc, deleteDoc,
+  onSnapshot, writeBatch
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDMOnF6KrTq1hoYcX6YYrNtDAImjxZddTI",
-  authDomain: "kids-complex-clockin-6a855.firebaseapp.com",
-  projectId: "kids-complex-clockin-6a855",
-  storageBucket: "kids-complex-clockin-6a855.firebasestorage.app",
-  messagingSenderId: "1065783078206",
-  appId: "1:1065783078206:web:9433409a57651a18b8906f"
+  apiKey: "AIzaSyDgy4P6g-DtvhEo6aKNqDFG9CDu68M_ZIw",
+  authDomain: "kidscomplexclockin.firebaseapp.com",
+  projectId: "kidscomplexclockin",
+  storageBucket: "kidscomplexclockin.firebasestorage.app",
+  messagingSenderId: "625380610665",
+  appId: "1:625380610665:web:32cd8f74a23850070a08f8"
 };
 
 const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
 
-const db = getFirestore(app);
+// ── Firestore helpers ─────────────────────────────────────────────────────
+// Generic: load entire collection as array
+async function loadCol(col) {
+  const snap = await getDocs(collection(db, col));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+// Save a single document (upsert by id)
+async function saveDoc(col, data) {
+  await setDoc(doc(db, col, data.id), data);
+}
+// Save entire array to a collection (batch upsert)
+async function saveCol(col, arr) {
+  if (!arr || arr.length === 0) return;
+  const batch = writeBatch(db);
+  arr.forEach(item => {
+    batch.set(doc(db, col, item.id), item);
+  });
+  await batch.commit();
+}
+// Delete a document
+async function deleteDocById(col, id) {
+  await deleteDoc(doc(db, col, id));
+}
+// Real-time listener for a collection
+function listenCol(col, cb) {
+  return onSnapshot(collection(db, col), snap => {
+    cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  });
+}
 
-window.db = db;
-window.fb = {
-  collection,
-  addDoc,
-  getDocs,
-  doc,
-  updateDoc,
-  deleteDoc,
-  setDoc,
-  getDoc
-};
+window.FS = { loadCol, saveDoc, saveCol, deleteDocById, listenCol, db };
+window.dispatchEvent(new Event('firebaseReady'));
 </script>
 </body>
 </html>
