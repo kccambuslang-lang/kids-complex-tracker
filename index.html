@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -120,7 +121,6 @@ const {useState,useEffect,useRef,useCallback}=React;
 const DEPARTMENTS=['Kids Zone','Sports','Arts & Crafts','Admin','Kitchen','Management'];
 const DEPT_COLORS={'Kids Zone':'dept-color-kids','Sports':'dept-color-sports','Arts & Crafts':'dept-color-arts','Admin':'dept-color-admin','Kitchen':'dept-color-kitchen','Management':'dept-color-management'};
 const SHIFT_PRESETS=[{label:'Early',start:'07:00',end:'13:00'},{label:'Mid',start:'10:00',end:'16:00'},{label:'Late',start:'13:00',end:'19:00'},{label:'Full',start:'08:00',end:'16:00'},{label:'Split',start:'09:00',end:'17:00'},{label:'Custom',start:'',end:''}];
-// Week runs Sat(0) Sun(1) Mon(2) Tue(3) Wed(4) Thu(5) Fri(6)
 const DAYS=['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
 
 // ── UTILS ─────────────────────────────────────────────────
@@ -131,17 +131,12 @@ const getInitials=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
 const formatDate=d=>{if(!d)return'';try{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}catch{return d}};
 const TODAY=new Date().toISOString().slice(0,10);
 
-// Week starts on Saturday.
-// JS getDay(): 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat
-// Our day index: 0=Sat,1=Sun,2=Mon,3=Tue,4=Wed,5=Thu,6=Fri
-// Mapping JS getDay() → our index: Sat(6)→0, Sun(0)→1, Mon(1)→2 ... Fri(5)→6
 function jsdayToIdx(jsDay){ return (jsDay+1)%7; }
 function getTodayIdx(){ return jsdayToIdx(new Date().getDay()); }
 
 function getSaturdayOfWeek(date){
   const d=new Date(date+'T12:00:00');
-  const jsDay=d.getDay(); // 0=Sun … 6=Sat
-  // days since last Saturday: Sat→0, Sun→1, Mon→2, Tue→3, Wed→4, Thu→5, Fri→6
+  const jsDay=d.getDay();
   const daysSinceSat=(jsDay+1)%7;
   d.setDate(d.getDate()-daysSinceSat);
   d.setHours(0,0,0,0);
@@ -161,7 +156,6 @@ function weekDates(satStart){
     return d.toISOString().slice(0,10);
   });
 }
-// Returns the Friday (last day) of a Sat-start week
 function weekEndDate(satStart){
   const d=new Date(satStart+'T12:00:00');
   d.setDate(d.getDate()+6);
@@ -171,7 +165,6 @@ function calculatePaidHours(clockIn,clockOut,trackedBreakMins){
   if(!clockIn||!clockOut)return{grossHours:0,paidHours:0,breakMinutes:0};
   const gross=(timeToMins(clockOut)-timeToMins(clockIn))/60;
   if(gross<=0)return{grossHours:0,paidHours:0,breakMinutes:0};
-  // Use whichever is greater: actual tracked break or the auto 30-min rule (only if >4h)
   const autoBreak=gross>4?30:0;
   const actualBreak=trackedBreakMins||0;
   const brk=Math.max(autoBreak,actualBreak);
@@ -219,20 +212,9 @@ const SEED_ROTA=[{id:'R001',weekStartDate:THIS_SATURDAY,shifts:[
   {id:'SH014',staffId:'S006',day:2,startTime:'11:00',endTime:'15:00',department:'Kitchen',shiftType:'Custom'},
   {id:'SH015',staffId:'S006',day:3,startTime:'11:00',endTime:'15:00',department:'Kitchen',shiftType:'Custom'},
 ]}];
-const SEED_ATTENDANCE=[
-  {id:'A001',staffId:'S001',date:THIS_SATURDAY,rotaShiftId:'SH001',scheduledStart:'09:00',scheduledEnd:'17:00',clockIn:'08:55',clockOut:'17:05',breakMinutes:30,grossHours:8.17,paidHours:7.67,status:'early',earlyLateMinutes:-5,notes:''},
-  {id:'A002',staffId:'S002',date:THIS_SATURDAY,rotaShiftId:'SH004',scheduledStart:'08:00',scheduledEnd:'16:00',clockIn:'08:12',clockOut:'16:00',breakMinutes:30,grossHours:7.8,paidHours:7.3,status:'late',earlyLateMinutes:12,notes:''},
-  {id:'A003',staffId:'S003',date:THIS_SATURDAY,rotaShiftId:'SH007',scheduledStart:'09:00',scheduledEnd:'15:00',clockIn:'09:00',clockOut:'15:00',breakMinutes:30,grossHours:6,paidHours:5.5,status:'on-time',earlyLateMinutes:0,notes:''},
-];
-const SEED_HOLIDAYS=[
-  {id:'H001',staffId:'S003',startDate:'2025-08-11',endDate:'2025-08-15',reason:'Family holiday',status:'pending',reviewedBy:null,reviewedAt:null,createdAt:TODAY},
-  {id:'H002',staffId:'S004',startDate:'2025-07-28',endDate:'2025-07-30',reason:'Wedding',status:'approved',reviewedBy:'S001',reviewedAt:TODAY,createdAt:TODAY},
-  {id:'H003',staffId:'S005',startDate:'2025-09-01',endDate:'2025-09-05',reason:'',status:'pending',reviewedBy:null,reviewedAt:null,createdAt:TODAY},
-];
-const SEED_ABSENCE=[
-  {id:'AB001',staffId:'S004',staffName:'Tom Brady',date:TODAY,type:'late',comment:'Traffic on M6, arrived 20 mins late',approvedBy:null,approvedAt:null,createdAt:TODAY},
-  {id:'AB002',staffId:'S005',staffName:'Emma Walsh',date:TODAY,type:'sick',comment:'Feeling unwell - stomach bug',approvedBy:'U002',approvedAt:TODAY,createdAt:TODAY},
-];
+const SEED_ATTENDANCE=[];
+const SEED_HOLIDAYS=[];
+const SEED_ABSENCE=[];
 const SEED_TEMPLATES=[{id:'T001',name:'Standard Week',createdAt:TODAY,createdBy:'S001',shifts:[
   {staffId:'S001',day:0,startTime:'09:00',endTime:'17:00',department:'Management',shiftType:'Full'},
   {staffId:'S001',day:1,startTime:'09:00',endTime:'17:00',department:'Management',shiftType:'Full'},
@@ -250,6 +232,8 @@ function Toast({msg,type}){
 }
 
 // ── LOGIN ─────────────────────────────────────────────────
+// FIX: LoginScreen now correctly looks up the user record from the users array
+// to get the real PIN, instead of reading a non-existent s.pin from the staff record.
 function LoginScreen({users,staff,onLogin}){
   const [step,setStep]=useState('select');
   const [selected,setSelected]=useState(null);
@@ -287,14 +271,17 @@ function LoginScreen({users,staff,onLogin}){
           <p style={{fontWeight:700,fontSize:15,marginBottom:12,textAlign:'center',color:'var(--muted)'}}>Select your name to sign in</p>
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {activeStaff.map(s=>{
-              const u = {
-  id: `user-${s.id}`,
-  staffId: s.id,
-  fullName: s.fullName || s.name || "",
-  name: s.fullName || s.name || "",
-  role: s.role || "staff",
-  pin: String(s.pin || "1234")
-};
+              // ✅ FIX: Look up the real user record to get the correct PIN
+              const userRec=users.find(ur=>ur.staffId===s.id);
+              if(!userRec)return null; // skip staff with no login account
+              const u={
+                id:userRec.id,
+                staffId:s.id,
+                fullName:s.fullName||'',
+                name:s.fullName||'',
+                role:userRec.role||s.role||'staff',
+                pin:String(userRec.pin)
+              };
               const avatarBg=s.role==='manager'?'var(--purple-light)':s.role==='supervisor'?'var(--teal-light)':'var(--pink-light)';
               const avatarColor=s.role==='manager'?'var(--purple)':s.role==='supervisor'?'var(--teal)':'var(--pink)';
               return(
@@ -343,7 +330,7 @@ function TopBar({user,profile,onLogout,onReset}){
         <span className="muted" style={{fontSize:12,textTransform:'capitalize'}}>{user.role}</span>
         <div style={{position:'relative'}}>
           <button onClick={()=>setMenu(!menu)} style={{background:'var(--purple-light)',border:'none',borderRadius:'50%',width:36,height:36,cursor:'pointer',fontWeight:800,color:'var(--purple)',fontSize:13}}>
-            {getInitials(profile?.fullName||user.username)}
+            {getInitials(profile?.fullName||user.username||'?')}
           </button>
           {menu&&(
             <div style={{position:'absolute',right:0,top:44,background:'var(--card)',border:'1px solid var(--border)',borderRadius:'var(--radius-sm)',padding:'6px',zIndex:300,minWidth:150,boxShadow:'0 4px 20px rgba(0,0,0,0.12)'}}>
@@ -358,6 +345,20 @@ function TopBar({user,profile,onLogout,onReset}){
   );
 }
 
+// ── SHARED PAYROLL HELPER ─────────────────────────────────
+// Returns per-staff summary for a given week
+function buildWeekPayroll(staff,attendance,weekStart){
+  const weekEnd=weekEndDate(weekStart);
+  const activeStaff=staff.filter(s=>s.employmentStatus==='active'||s.employmentStatus==='onboarding');
+  return activeStaff.map(s=>{
+    const recs=attendance.filter(a=>a.staffId===s.id&&a.date>=weekStart&&a.date<=weekEnd);
+    const paidHours=recs.reduce((acc,a)=>acc+(a.paidHours||0),0);
+    const wageCost=paidHours*(s.payRate||0);
+    const daysWorked=recs.filter(a=>a.clockIn).length;
+    return{...s,paidHours,wageCost,daysWorked,recs};
+  });
+}
+
 // ── MANAGER DASHBOARD ─────────────────────────────────────
 function ManagerDashboard({staff,rota,attendance,holidays,absences}){
   const todayIdx=getTodayIdx();
@@ -370,6 +371,10 @@ function ManagerDashboard({staff,rota,attendance,holidays,absences}){
   const allWeekAtt=attendance.filter(a=>a.date>=THIS_SATURDAY&&a.date<=weekEnd);
   const weekSchedHrs=weekRota?weekRota.shifts.reduce((acc,s)=>acc+Math.max(0,(timeToMins(s.endTime)-timeToMins(s.startTime))/60),0):0;
   const weekWorkedHrs=allWeekAtt.reduce((acc,a)=>acc+(a.paidHours||0),0);
+
+  // Per-staff wage breakdown for this week
+  const payroll=buildWeekPayroll(staff,attendance,THIS_SATURDAY);
+  const totalWageCost=payroll.reduce((acc,p)=>acc+p.wageCost,0);
 
   return(
     <div className="page">
@@ -386,6 +391,34 @@ function ManagerDashboard({staff,rota,attendance,holidays,absences}){
       <div className="grid-2 mb-2">
         <div className="stat-card"><div className="muted" style={{fontSize:11}}>Scheduled Hrs (wk)</div><div className="stat-num" style={{color:'var(--purple)',fontSize:22}}>{weekSchedHrs.toFixed(1)}</div></div>
         <div className="stat-card"><div className="muted" style={{fontSize:11}}>Worked Hrs (wk)</div><div className="stat-num" style={{color:'var(--teal)',fontSize:22}}>{weekWorkedHrs.toFixed(1)}</div></div>
+      </div>
+
+      {/* ── Weekly wage cost summary ── */}
+      <div className="card mb-2" style={{borderLeft:'4px solid var(--pink)'}}>
+        <div className="row-between mb-2">
+          <div className="subheading">💷 This Week's Wage Cost</div>
+          <div style={{fontWeight:900,fontSize:20,color:'var(--pink)'}}>£{totalWageCost.toFixed(2)}</div>
+        </div>
+        {payroll.filter(p=>p.paidHours>0).map(p=>(
+          <div key={p.id} className="list-item" style={{paddingTop:8,paddingBottom:8}}>
+            <div className="avatar" style={{width:32,height:32,background:'var(--purple-light)',color:'var(--purple)',fontSize:11,flexShrink:0}}>{getInitials(p.fullName)}</div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600,fontSize:13}}>{p.fullName}</div>
+              <div className="muted" style={{fontSize:11}}>£{p.payRate.toFixed(2)}/hr · {p.daysWorked} day{p.daysWorked!==1?'s':''}</div>
+            </div>
+            <div style={{textAlign:'right'}}>
+              <div style={{fontWeight:700,fontSize:13,color:'var(--purple)'}}>{p.paidHours.toFixed(2)}h</div>
+              <div style={{fontWeight:800,fontSize:13,color:'var(--pink)'}}>£{p.wageCost.toFixed(2)}</div>
+            </div>
+          </div>
+        ))}
+        {payroll.filter(p=>p.paidHours>0).length===0&&(
+          <p className="muted" style={{fontSize:13}}>No hours logged this week yet.</p>
+        )}
+        <div style={{borderTop:'1px solid var(--border)',marginTop:8,paddingTop:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span className="muted" style={{fontSize:12}}>30 min unpaid break auto-deducted on shifts &gt;4h</span>
+          <span style={{fontWeight:900,fontSize:15,color:'var(--pink)'}}>£{totalWageCost.toFixed(2)}</span>
+        </div>
       </div>
 
       {todayShifts.length>0&&(
@@ -452,6 +485,9 @@ function SupervisorDashboard({staff,rota,attendance,absences,onApproveAbsence}){
   const todayShifts=weekRota?weekRota.shifts.filter(s=>s.day===todayIdx):[];
   const todayAtt=attendance.filter(a=>a.date===TODAY);
   const pending=absences.filter(a=>!a.approvedBy);
+  // Weekly hours per staff for supervisor view (no wage costs — supervisors don't see pay rates)
+  const weekPayroll=buildWeekPayroll(staff,attendance,THIS_SATURDAY);
+  const totalWeekHours=weekPayroll.reduce((acc,p)=>acc+p.paidHours,0);
   return(
     <div className="page">
       <div className="mb-2"><h1 className="heading">Supervisor View 👀</h1><p className="muted">{new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</p></div>
@@ -464,12 +500,36 @@ function SupervisorDashboard({staff,rota,attendance,absences,onApproveAbsence}){
           return(
             <div key={sh.id} className="list-item">
               <div className="avatar" style={{width:32,height:32,background:'var(--teal-light)',color:'var(--teal)',fontSize:11}}>{getInitials(s.fullName)}</div>
-              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>{s.fullName}</div><div className="muted">{sh.startTime}–{sh.endTime}</div></div>
-              {att?<span className={`badge ${att.status==='late'?'badge-late':'badge-ontime'}`}>{att.status}</span>:<span className="badge badge-info">Scheduled</span>}
+              <div style={{flex:1}}>
+                <div style={{fontWeight:600,fontSize:14}}>{s.fullName}</div>
+                <div className="muted">{sh.startTime}–{sh.endTime} · {sh.department}</div>
+                {att?.clockIn&&<div style={{fontSize:11,color:'var(--teal)',fontWeight:600}}>In: {att.clockIn}{att.clockOut?' · Out: '+att.clockOut:' · Still in'}{att.paidHours>0?' · '+att.paidHours.toFixed(2)+'h paid':''}</div>}
+              </div>
+              {att?<span className={`badge ${att.status==='late'?'badge-late':att.status==='early'?'badge-early':'badge-ontime'}`}>{att.status}</span>:<span className="badge badge-info">Scheduled</span>}
             </div>
           );
         })}
       </div>
+
+      {/* Weekly hours breakdown */}
+      <div className="card mb-2">
+        <div className="row-between mb-2">
+          <div className="subheading">📊 This Week's Hours</div>
+          <div style={{fontWeight:800,fontSize:15,color:'var(--purple)'}}>{totalWeekHours.toFixed(1)}h total</div>
+        </div>
+        {weekPayroll.filter(p=>p.paidHours>0).map(p=>(
+          <div key={p.id} className="list-item" style={{paddingTop:7,paddingBottom:7}}>
+            <div className="avatar" style={{width:30,height:30,background:'var(--purple-light)',color:'var(--purple)',fontSize:10,flexShrink:0}}>{getInitials(p.fullName)}</div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600,fontSize:13}}>{p.fullName}</div>
+              <div className="muted" style={{fontSize:11}}>{p.daysWorked} day{p.daysWorked!==1?'s':''} worked</div>
+            </div>
+            <div style={{fontWeight:700,fontSize:13,color:'var(--purple)'}}>{p.paidHours.toFixed(2)}h</div>
+          </div>
+        ))}
+        {weekPayroll.filter(p=>p.paidHours>0).length===0&&<p className="muted" style={{fontSize:13}}>No hours logged this week yet.</p>}
+      </div>
+
       {pending.length>0&&(
         <div className="card">
           <div className="subheading mb-1">⚠️ Reports to Approve</div>
@@ -759,7 +819,7 @@ function CopyTemplateModal({templates,onApply,onClose}){
         </div>
         {tpl&&<div className="alert alert-info">{tpl.shifts.length} shifts will be copied to {formatDate(targetWeek)}</div>}
         <div className="row">
-          <button className="pill pill-primary" style={{flex:1}} onClick={()=>{if(!tpl){showToast('Select a template','error');return}onApply(tpl,targetWeek)}}>Apply Template</button>
+          <button className="pill pill-primary" style={{flex:1}} onClick={()=>{if(!tpl)return;onApply(tpl,targetWeek)}}>Apply Template</button>
           <button className="pill pill-ghost" onClick={onClose}>Cancel</button>
         </div>
       </div>
@@ -1100,7 +1160,7 @@ function AttendanceModal({staff,existing,date,onSave,onClose}){
   );
 }
 
-// ── CLOCK IN/OUT (all roles) ──────────────────────────────
+// ── CLOCK IN/OUT ──────────────────────────────────────────
 function ClockInOut({profile,rota,attendance,setAttendance,showToast}){
   const [now,setNow]=useState(new Date());
   useEffect(()=>{const t=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(t)},[]);
@@ -1110,19 +1170,16 @@ function ClockInOut({profile,rota,attendance,setAttendance,showToast}){
   const todayShift=weekRota?weekRota.shifts.find(s=>s.staffId===profile?.id&&s.day===todayIdx):null;
   const rec=attendance.find(a=>a.staffId===profile?.id&&a.date===TODAY);
 
-  // Derive break state from the breaks array on the record
   const breaks=rec?.breaks||[];
   const onBreak=breaks.length>0&&!breaks[breaks.length-1].breakIn;
   const currentBreakStart=onBreak?breaks[breaks.length-1].breakOut:null;
 
-  // Calculate total completed break minutes from all finished breaks
   function totalCompletedBreakMins(bks){
     return bks.filter(b=>b.breakOut&&b.breakIn).reduce((acc,b)=>{
       return acc+(timeToMins(b.breakIn)-timeToMins(b.breakOut));
     },0);
   }
 
-  // Live break duration display
   const liveBreakMins=onBreak&&currentBreakStart
     ? Math.floor((now-new Date(TODAY+'T'+currentBreakStart+':00'))/60000)
     : 0;
@@ -1189,15 +1246,11 @@ function ClockInOut({profile,rota,attendance,setAttendance,showToast}){
   return(
     <div className="page">
       <h1 className="heading mb-2">Clock In / Out ⏱️</h1>
-
-      {/* Live clock */}
-      <div className="card text-center mb-2" style={{padding:'1.5rem',borderTop: onBreak?'4px solid var(--yellow)':rec?.clockIn&&!rec?.clockOut?'4px solid var(--teal)':'4px solid var(--border)'}}>
+      <div className="card text-center mb-2" style={{padding:'1.5rem',borderTop:onBreak?'4px solid var(--yellow)':rec?.clockIn&&!rec?.clockOut?'4px solid var(--teal)':'4px solid var(--border)'}}>
         <div style={{fontSize:44,fontWeight:900,color:onBreak?'var(--orange)':'var(--purple)',fontVariantNumeric:'tabular-nums',letterSpacing:2}}>{now.toTimeString().slice(0,8)}</div>
         <div className="muted mt-1">{now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</div>
         {onBreak&&<div style={{marginTop:8,background:'var(--yellow-light)',borderRadius:8,padding:'6px 12px',display:'inline-block',color:'#B8820A',fontWeight:700,fontSize:13}}>☕ On break — {liveBreakMins} min</div>}
       </div>
-
-      {/* Today's shift */}
       {todayShift&&(
         <div className="card-sm mb-2" style={{borderLeft:'4px solid var(--purple)'}}>
           <div className="subheading mb-1">Today's Shift</div>
@@ -1208,8 +1261,6 @@ function ClockInOut({profile,rota,attendance,setAttendance,showToast}){
         </div>
       )}
       {!todayShift&&<div className="alert alert-info mb-2">No scheduled shift today — you can still clock in as ad-hoc.</div>}
-
-      {/* Attendance summary */}
       {rec?.clockIn&&(
         <div className="card-sm mb-2" style={{borderLeft:`4px solid ${onBreak?'var(--yellow)':'var(--teal)'}`}}>
           <div className="grid-2">
@@ -1220,7 +1271,6 @@ function ClockInOut({profile,rota,attendance,setAttendance,showToast}){
           </div>
           {rec.earlyLateMinutes>5&&<div style={{color:'var(--orange)',fontSize:12,marginTop:6}}>⚠️ {rec.earlyLateMinutes} min late</div>}
           {rec.earlyLateMinutes<-5&&<div style={{color:'var(--teal)',fontSize:12,marginTop:6}}>✅ {Math.abs(rec.earlyLateMinutes)} min early</div>}
-          {/* Break history */}
           {breaks.length>0&&(
             <div style={{marginTop:10,borderTop:'1px solid var(--border)',paddingTop:10}}>
               <div style={{fontSize:12,fontWeight:700,color:'var(--muted)',marginBottom:6}}>BREAK HISTORY</div>
@@ -1237,8 +1287,6 @@ function ClockInOut({profile,rota,attendance,setAttendance,showToast}){
           )}
         </div>
       )}
-
-      {/* Action buttons */}
       {!rec?.clockIn&&(
         <button className="clock-btn" style={{background:'linear-gradient(135deg,#2BBFAA,#1A9E8E)',color:'#fff'}} onClick={clockIn}>✅ Clock In</button>
       )}
@@ -1252,6 +1300,7 @@ function ClockInOut({profile,rota,attendance,setAttendance,showToast}){
         <button className="clock-btn" style={{background:'linear-gradient(135deg,#FF8C42,#E07835)',color:'#fff'}} onClick={clockOut}>🏁 Clock Out</button>
       )}
       {rec?.clockOut&&<div className="alert alert-success">Shift complete for today! See you next time 👋</div>}
+      {!profile&&<div className="alert alert-error">⚠️ Profile not found. Ask a manager to log your hours via the Team tab.</div>}
     </div>
   );
 }
@@ -1289,7 +1338,6 @@ function MyLeave({profile,holidays,setHolidays,absences,setAbsences,showToast}){
         <button className={`tab${tab==='holidays'?' active':''}`} onClick={()=>setTab('holidays')}>Holiday Requests</button>
         <button className={`tab${tab==='absence'?' active':''}`} onClick={()=>setTab('absence')}>Report Absence</button>
       </div>
-
       {tab==='holidays'&&<>
         <div className="row-between mb-2">
           <div className="subheading">My Requests ({myHols.length})</div>
@@ -1322,7 +1370,6 @@ function MyLeave({profile,holidays,setHolidays,absences,setAbsences,showToast}){
           </div>
         )}
       </>}
-
       {tab==='absence'&&<>
         <div className="card mb-2">
           <div className="subheading mb-2">Submit a Report</div>
@@ -1350,7 +1397,7 @@ function MyLeave({profile,holidays,setHolidays,absences,setAbsences,showToast}){
   );
 }
 
-// ── ABSENCE REPORTS (supervisor) ──────────────────────────
+// ── ABSENCE REPORTS ───────────────────────────────────────
 function AbsenceReports({absences,staff,onApprove}){
   const [filter,setFilter]=useState('pending');
   const filtered=absences.filter(a=>filter==='all'?true:filter==='pending'?!a.approvedBy:!!a.approvedBy);
@@ -1385,7 +1432,7 @@ function AbsenceReports({absences,staff,onApprove}){
   );
 }
 
-// ── HOLIDAY APPROVALS (manager tab) ───────────────────────
+// ── HOLIDAY APPROVALS ─────────────────────────────────────
 function HolidayApprovals({holidays,setHolidays,staff,currentUser,showToast}){
   const [filter,setFilter]=useState('pending');
   const filtered=holidays.filter(h=>filter==='all'?true:h.status===filter);
@@ -1434,20 +1481,107 @@ function HolidayApprovals({holidays,setHolidays,staff,currentUser,showToast}){
   );
 }
 
-// ── HR MODULE (manager) ───────────────────────────────────
-function HRModule({staff,setStaff,holidays,setHolidays,absences,currentUser,showToast}){
-  const [tab,setTab]=useState('compliance');
+// ── HR MODULE ─────────────────────────────────────────────
+function HRModule({staff,setStaff,holidays,setHolidays,absences,attendance,currentUser,showToast}){
+  const [tab,setTab]=useState('payroll');
   return(
     <div className="page">
       <h1 className="heading mb-2">HR & Records 📋</h1>
       <div className="tab-bar">
-        <button className={`tab${tab==='compliance'?' active':''}`} onClick={()=>setTab('compliance')}>Compliance</button>
-        <button className={`tab${tab==='leave'?' active':''}`} onClick={()=>setTab('leave')}>Leave</button>
-        <button className={`tab${tab==='absence'?' active':''}`} onClick={()=>setTab('absence')}>Absence</button>
+        <button className={`tab${tab==='payroll'?' active':''}`} onClick={()=>setTab('payroll')} style={{fontSize:11}}>Payroll</button>
+        <button className={`tab${tab==='compliance'?' active':''}`} onClick={()=>setTab('compliance')} style={{fontSize:11}}>Compliance</button>
+        <button className={`tab${tab==='leave'?' active':''}`} onClick={()=>setTab('leave')} style={{fontSize:11}}>Leave</button>
+        <button className={`tab${tab==='absence'?' active':''}`} onClick={()=>setTab('absence')} style={{fontSize:11}}>Absence</button>
       </div>
+      {tab==='payroll'&&<PayrollPanel staff={staff} attendance={attendance} />}
       {tab==='compliance'&&<CompliancePanel staff={staff} setStaff={setStaff} showToast={showToast} />}
       {tab==='leave'&&<HolidayApprovals holidays={holidays} setHolidays={setHolidays} staff={staff} currentUser={currentUser} showToast={showToast} />}
       {tab==='absence'&&<AbsenceReports absences={absences} staff={staff} onApprove={()=>{}} />}
+    </div>
+  );
+}
+
+function PayrollPanel({staff,attendance}){
+  const [viewWeek,setViewWeek]=useState(THIS_SATURDAY);
+  const dates=weekDates(viewWeek);
+  const payroll=buildWeekPayroll(staff,attendance,viewWeek);
+  const totalHours=payroll.reduce((acc,p)=>acc+p.paidHours,0);
+  const totalCost=payroll.reduce((acc,p)=>acc+p.wageCost,0);
+  const [expanded,setExpanded]=useState(null);
+
+  return(
+    <div>
+      <div className="week-nav">
+        <button onClick={()=>setViewWeek(addWeeks(viewWeek,-1))}>‹ Prev</button>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontWeight:700,fontSize:13}}>{formatDate(viewWeek)} – {formatDate(dates[6])}</div>
+          {viewWeek===THIS_SATURDAY&&<div className="muted" style={{fontSize:11}}>This week</div>}
+        </div>
+        <button onClick={()=>setViewWeek(addWeeks(viewWeek,1))}>Next ›</button>
+      </div>
+
+      {/* Totals summary */}
+      <div className="grid-2 mb-2">
+        <div className="stat-card"><div className="muted" style={{fontSize:11}}>Total Paid Hours</div><div className="stat-num" style={{color:'var(--purple)',fontSize:22}}>{totalHours.toFixed(1)}</div></div>
+        <div className="stat-card"><div className="muted" style={{fontSize:11}}>Total Wage Cost</div><div className="stat-num" style={{color:'var(--pink)',fontSize:22}}>£{totalCost.toFixed(2)}</div></div>
+      </div>
+
+      <div className="alert alert-info mb-2" style={{fontSize:12}}>30 min unpaid break auto-deducted on shifts over 4 hours.</div>
+
+      {/* Per-staff rows — expandable for daily breakdown */}
+      {payroll.map(p=>(
+        <div key={p.id} className="card-sm mb-1">
+          <div className="row-between" style={{cursor:'pointer'}} onClick={()=>setExpanded(expanded===p.id?null:p.id)}>
+            <div className="row gap-1">
+              <div className="avatar" style={{width:36,height:36,background:'var(--purple-light)',color:'var(--purple)',fontSize:12}}>{getInitials(p.fullName)}</div>
+              <div>
+                <div style={{fontWeight:700,fontSize:13}}>{p.fullName}</div>
+                <div className="muted" style={{fontSize:11}}>{p.department} · £{p.payRate.toFixed(2)}/hr</div>
+              </div>
+            </div>
+            <div style={{textAlign:'right',display:'flex',alignItems:'center',gap:12}}>
+              <div>
+                <div style={{fontWeight:700,fontSize:13,color:'var(--purple)'}}>{p.paidHours.toFixed(2)}h</div>
+                <div style={{fontWeight:800,fontSize:13,color:'var(--pink)'}}>£{p.wageCost.toFixed(2)}</div>
+              </div>
+              <span style={{color:'var(--muted)',fontSize:14}}>{expanded===p.id?'▲':'▼'}</span>
+            </div>
+          </div>
+
+          {/* Expanded: day-by-day breakdown */}
+          {expanded===p.id&&(
+            <div style={{marginTop:10,borderTop:'1px solid var(--border)',paddingTop:10}}>
+              <div style={{fontSize:11,fontWeight:700,color:'var(--muted)',marginBottom:6,letterSpacing:'0.06em'}}>DAILY BREAKDOWN</div>
+              {dates.map((date,i)=>{
+                const rec=p.recs.find(r=>r.date===date);
+                const dayName=DAYS[i];
+                return(
+                  <div key={date} style={{display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12,padding:'4px 0',borderBottom:'1px solid var(--border)'}}>
+                    <span style={{color:'var(--muted)',minWidth:60}}>{dayName} {new Date(date+'T12:00').getDate()}</span>
+                    {rec?.clockIn?(
+                      <>
+                        <span style={{color:'var(--text)'}}>{rec.clockIn} – {rec.clockOut||'—'}</span>
+                        <span style={{color:'var(--muted)'}}>break: {rec.breakMinutes||0}m</span>
+                        <span style={{fontWeight:700,color:'var(--purple)',minWidth:38,textAlign:'right'}}>{rec.paidHours.toFixed(2)}h</span>
+                        <span style={{fontWeight:700,color:'var(--pink)',minWidth:52,textAlign:'right'}}>£{(rec.paidHours*(p.payRate||0)).toFixed(2)}</span>
+                      </>
+                    ):(
+                      <span style={{color:'var(--border)',flex:1,textAlign:'center'}}>—</span>
+                    )}
+                  </div>
+                );
+              })}
+              <div style={{display:'flex',justifyContent:'space-between',marginTop:8,fontWeight:800,fontSize:13}}>
+                <span style={{color:'var(--muted)'}}>Week total</span>
+                <span style={{color:'var(--purple)'}}>{p.paidHours.toFixed(2)}h</span>
+                <span style={{color:'var(--pink)'}}>£{p.wageCost.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {payroll.length===0&&<div className="card text-center" style={{color:'var(--muted)',padding:'2rem'}}>No active staff found.</div>}
     </div>
   );
 }
@@ -1508,6 +1642,7 @@ function CompliancePanel({staff,setStaff,showToast}){
     </div>
   );
 }
+
 // ── APP ROOT ──────────────────────────────────────────────
 function App(){
   const [ready,setReady]=useState(false);
@@ -1522,12 +1657,10 @@ function App(){
   const [navTab,setNavTab]=useState('dashboard');
   const [toast,setToast]=useState(null);
 
-  // ── Connect to Firestore and load all data ──────────────
   useEffect(()=>{
     async function init(){
       try {
         const FS = window.FS;
-        // Seed each collection if empty, then subscribe to real-time updates
         const [fbStaff,fbUsers,fbRota,fbAtt,fbHols,fbAbs,fbTpl] = await Promise.all([
           FS.loadCol('staff'), FS.loadCol('users'), FS.loadCol('rota'),
           FS.loadCol('attendance'), FS.loadCol('holidays'),
@@ -1542,7 +1675,6 @@ function App(){
         if(fbAbs.length===0)      await FS.saveCol('absences', SEED_ABSENCE);
         if(fbTpl.length===0)      await FS.saveCol('templates',SEED_TEMPLATES);
 
-        // Real-time listeners — any change in Firestore updates React state instantly
         FS.listenCol('staff',      d=>setStaff(d));
         FS.listenCol('users',      d=>setUsers(d));
         FS.listenCol('rota',       d=>setRota(d));
@@ -1553,7 +1685,7 @@ function App(){
         setReady(true);
       } catch(e) {
         console.error('Firebase init error:', e);
-        setReady(true); // show app anyway
+        setReady(true);
       }
     }
     if(window.FS) init();
@@ -1564,7 +1696,6 @@ function App(){
     setToast({msg,type});setTimeout(()=>setToast(null),3000);
   },[]);
 
-  // ── Loading screen while Firebase connects ──────────────
   if(!ready){
     return(
       <div style={{minHeight:'100vh',background:'var(--bg)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16}}>
@@ -1629,7 +1760,7 @@ function App(){
         {navTab==='attendance'&&<AttendanceManager staff={staff} attendance={attendance} setAttendance={setAttendance} rota={rota} showToast={showToast} role={role} />}
         {navTab==='clockin'&&<ClockInOut profile={myProfile} rota={rota} attendance={attendance} setAttendance={setAttendance} showToast={showToast} />}
         {navTab==='leave'&&<MyLeave profile={myProfile} holidays={holidays} setHolidays={setHolidays} absences={absences} setAbsences={setAbsences} showToast={showToast} />}
-        {navTab==='hr'&&role==='manager'&&<HRModule staff={staff} setStaff={setStaff} holidays={holidays} setHolidays={setHolidays} absences={absences} currentUser={currentUser} showToast={showToast} />}
+        {navTab==='hr'&&role==='manager'&&<HRModule staff={staff} setStaff={setStaff} holidays={holidays} setHolidays={setHolidays} absences={absences} attendance={attendance} currentUser={currentUser} showToast={showToast} />}
         {navTab==='reports'&&role==='supervisor'&&<AbsenceReports absences={absences} staff={staff} onApprove={approveAbsence} />}
       </main>
       <nav className="nav">
@@ -1665,17 +1796,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-// ── Firestore helpers ─────────────────────────────────────────────────────
-// Generic: load entire collection as array
 async function loadCol(col) {
   const snap = await getDocs(collection(db, col));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
-// Save a single document (upsert by id)
 async function saveDoc(col, data) {
   await setDoc(doc(db, col, data.id), data);
 }
-// Save entire array to a collection (batch upsert)
 async function saveCol(col, arr) {
   if (!arr || arr.length === 0) return;
   const batch = writeBatch(db);
@@ -1684,11 +1811,9 @@ async function saveCol(col, arr) {
   });
   await batch.commit();
 }
-// Delete a document
 async function deleteDocById(col, id) {
   await deleteDoc(doc(db, col, id));
 }
-// Real-time listener for a collection
 function listenCol(col, cb) {
   return onSnapshot(collection(db, col), snap => {
     cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
